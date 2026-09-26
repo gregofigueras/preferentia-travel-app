@@ -24,7 +24,9 @@ import {
   Circle,
   ArrowRight,
   FileSpreadsheet,
-  KanbanSquare
+  KanbanSquare,
+  MessageSquare,
+  TrendingUp
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 
@@ -51,7 +53,8 @@ function ExecutiveWorkspaceContent() {
     toggleUrgentTask,
     addUrgentTask,
     deleteUrgentTask,
-    addLegajo
+    addLegajo,
+    showToast
   } = useApp();
 
   // Active top-level workspace tab
@@ -174,6 +177,7 @@ function ExecutiveWorkspaceContent() {
   const totalPendienteUSD = data.liquidaciones.reduce((sum, l) => sum + (l.pending_balance || 0), 0);
   const countPendientes = data.liquidaciones.filter((l) => l.pending_balance > 0.05).length;
   const countSaldadas = data.liquidaciones.filter((l) => l.pending_balance <= 0.05).length;
+  const pctCobrado = totalFacturadoUSD > 0 ? Math.round((totalCobradoUSD / totalFacturadoUSD) * 100) : 0;
 
   // Calculadora de comisiones
   const netBeforeSplit = calcUtilidad * (1 - calcRetentionPct / 100);
@@ -307,8 +311,8 @@ function ExecutiveWorkspaceContent() {
     setIsAddingPayment(false);
   };
 
-  const copyWhatsApp = () => {
-    if (!selectedLiq) return;
+  const getWhatsAppMessage = () => {
+    if (!selectedLiq) return "";
     const isPaid = selectedLiq.pending_balance <= 0.05;
     const lines = [
       `✈️ *PREFERENTIA TRAVEL* - Estado de Liquidación`,
@@ -326,9 +330,22 @@ function ExecutiveWorkspaceContent() {
       ``,
       `Cualquier consulta sobre formas de pago o tipo de cambio del día, avísame. ¡Saludos! Lauti - Preferentia Travel`,
     ];
-    navigator.clipboard.writeText(lines.join("\n"));
+    return lines.join("\n");
+  };
+
+  const copyWhatsApp = () => {
+    const text = getWhatsAppMessage();
+    if (!text) return;
+    navigator.clipboard.writeText(text);
     setWhatsappCopied(true);
+    showToast("Resumen de liquidación copiado para WhatsApp 📋", "success");
     setTimeout(() => setWhatsappCopied(false), 2500);
+  };
+
+  const openWhatsAppWeb = () => {
+    const text = getWhatsAppMessage();
+    if (!text) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const handleCreateLiq = (e: React.FormEvent) => {
@@ -384,19 +401,38 @@ function ExecutiveWorkspaceContent() {
           </div>
 
           {/* Quick Metrics Bar across top */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-            <div className="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Total Facturado</span>
-              <span className="font-bold text-white text-sm">USD {totalFacturadoUSD.toLocaleString("es-AR")}</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 text-xs">
+            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800 flex-1 min-w-[120px]">
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold tracking-wider">Total Facturado</span>
+              <span className="font-bold text-white text-sm sm:text-base font-mono">USD {totalFacturadoUSD.toLocaleString("es-AR")}</span>
             </div>
-            <div className="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800">
-              <span className="text-emerald-400/90 block text-[10px] uppercase font-semibold">Total Cobrado</span>
-              <span className="font-bold text-emerald-400 text-sm">USD {totalCobradoUSD.toLocaleString("es-AR")}</span>
+            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800 flex-1 min-w-[120px]">
+              <span className="text-emerald-400/90 block text-[10px] uppercase font-semibold tracking-wider">Total Cobrado</span>
+              <span className="font-bold text-emerald-400 text-sm sm:text-base font-mono">USD {totalCobradoUSD.toLocaleString("es-AR")}</span>
             </div>
-            <div className="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-amber-500/30">
-              <span className="text-amber-400/90 block text-[10px] uppercase font-semibold">Saldo por Cobrar</span>
-              <span className="font-black text-amber-400 text-sm">USD {totalPendienteUSD.toLocaleString("es-AR")}</span>
+            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-amber-500/30 flex-1 min-w-[120px]">
+              <span className="text-amber-400/90 block text-[10px] uppercase font-semibold tracking-wider">Saldo por Cobrar</span>
+              <span className="font-black text-amber-400 text-sm sm:text-base font-mono">USD {totalPendienteUSD.toLocaleString("es-AR")}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Global Collection Rate Progress */}
+        <div className="pt-2 border-t border-slate-800/80">
+          <div className="flex items-center justify-between text-[11px] mb-1.5 font-medium">
+            <span className="text-slate-400 flex items-center space-x-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Efectividad Global de Cobranzas:</span>
+            </span>
+            <span className="text-emerald-400 font-mono font-bold">
+              {pctCobrado}% cobrado ({countSaldadas} saldadas de {data.liquidaciones.length})
+            </span>
+          </div>
+          <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+            <div 
+              className="bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+              style={{ width: `${pctCobrado}%` }}
+            />
           </div>
         </div>
 
@@ -449,16 +485,34 @@ function ExecutiveWorkspaceContent() {
         </div>
 
         {/* Hotkey hint */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 pt-1 gap-2">
           <div className="flex items-center space-x-2">
             <span>Atajos rápidos de teclado:</span>
-            <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 text-slate-300">Tecla 1</span>
-            <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 text-slate-300">Tecla 2</span>
-            <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 text-slate-300">Tecla 3</span>
+            <button
+              onClick={() => setActiveTab("seguimiento")}
+              className={`font-mono px-2 py-0.5 rounded border transition-colors ${activeTab === "seguimiento" ? "bg-sky-500/20 text-sky-300 border-sky-500/40" : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white"}`}
+              title="Cambiar a Seguimiento & Cotizaciones"
+            >
+              Tecla 1
+            </button>
+            <button
+              onClick={() => setActiveTab("numeros")}
+              className={`font-mono px-2 py-0.5 rounded border transition-colors ${activeTab === "numeros" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40" : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white"}`}
+              title="Cambiar a Mis Números & Legajos"
+            >
+              Tecla 2
+            </button>
+            <button
+              onClick={() => setActiveTab("liquidaciones")}
+              className={`font-mono px-2 py-0.5 rounded border transition-colors ${activeTab === "liquidaciones" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-slate-800 border-slate-700 text-slate-300 hover:text-white"}`}
+              title="Cambiar a Liquidaciones & Fichas"
+            >
+              Tecla 3
+            </button>
           </div>
           <button
             onClick={() => setNewLiqModal(true)}
-            className="text-sky-400 hover:text-sky-300 font-semibold flex items-center space-x-1"
+            className="text-sky-400 hover:text-sky-300 font-semibold flex items-center space-x-1.5 transition-colors self-start sm:self-auto"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nueva Liquidación Rápida</span>
@@ -806,6 +860,22 @@ function ExecutiveWorkspaceContent() {
                       <option value={6}>6% IIBB (* 0.94)</option>
                       <option value={0}>0% Sin retención (* 1.0)</option>
                     </select>
+                    <div className="flex gap-1.5 mt-2">
+                      {[18, 6, 0].map((pct) => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => setCalcRetentionPct(pct)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                            calcRetentionPct === pct
+                              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
+                              : "bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                          }`}
+                        >
+                          {pct === 18 ? "18% Gan." : pct === 6 ? "6% IIBB" : "0% Sin ret."}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div>
@@ -816,21 +886,41 @@ function ExecutiveWorkspaceContent() {
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-indigo-500"
                     >
                       <option value={50}>50% (Estándar)</option>
-                      <option value={30}>30%</option>
                       <option value={35}>35%</option>
+                      <option value={30}>30%</option>
                       <option value={25}>25%</option>
                     </select>
+                    <div className="flex gap-1.5 mt-2">
+                      {[50, 35, 30, 25].map((pct) => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => setCalcCommissionPct(pct)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                            calcCommissionPct === pct
+                              ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
+                              : "bg-slate-950 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                          }`}
+                        >
+                          {pct}%
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950/80 p-3 rounded-xl">
-                <div className="text-xs text-slate-400">
-                  Neto Retención: <span className="font-mono text-slate-200">${netBeforeSplit.toFixed(2)}</span>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-300">
+                  <span className="font-mono text-slate-400">Utilidad: ${calcUtilidad.toFixed(2)}</span>
+                  <span className="text-slate-600">➔</span>
+                  <span className="font-mono text-amber-400/90">Neto: ${netBeforeSplit.toFixed(2)}</span>
+                  <span className="text-slate-600">➔</span>
+                  <span className="font-mono text-sky-400">Split: {calcCommissionPct}%</span>
                 </div>
-                <div className="text-xs text-right">
-                  <span className="text-slate-400 mr-2">Tu Comisión Neta:</span>
-                  <span className="text-lg font-black text-emerald-400 font-mono">
+                <div className="text-xs text-right flex items-center justify-end space-x-2">
+                  <span className="text-slate-400">Tu Comisión Neta:</span>
+                  <span className="text-lg sm:text-xl font-black text-emerald-400 font-mono tracking-tight">
                     ${finalCommission.toFixed(2)}
                   </span>
                 </div>
@@ -1033,6 +1123,15 @@ function ExecutiveWorkspaceContent() {
                       </span>
                       <span className="text-slate-300 font-mono">Total: USD {liq.total_amount.toLocaleString("es-AR")}</span>
                     </div>
+
+                    {liq.total_amount > 0 && (
+                      <div className="w-full bg-slate-900 rounded-full h-1 mt-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${isPaid ? "bg-emerald-400" : "bg-gradient-to-r from-amber-500 to-emerald-400"}`}
+                          style={{ width: `${Math.min(100, Math.round((liq.total_paid / liq.total_amount) * 100))}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1073,6 +1172,14 @@ function ExecutiveWorkspaceContent() {
                       {whatsappCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-emerald-400" />}
                       <span>{whatsappCopied ? "¡Copiado!" : "Copiar para WhatsApp"}</span>
                     </button>
+                    <button
+                      onClick={openWhatsAppWeb}
+                      className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-all"
+                      title="Abrir directamente en WhatsApp Web con el resumen listo"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>WhatsApp Web</span>
+                    </button>
                     <Link
                       href={`/liquidaciones/${selectedLiq.id}`}
                       className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
@@ -1108,6 +1215,26 @@ function ExecutiveWorkspaceContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* Trip Payment Progress Bar */}
+                {selectedLiq.total_amount > 0 && (
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 font-medium">Progreso de Cobro del Viaje:</span>
+                      <span className={`font-mono font-bold ${selectedLiq.pending_balance <= 0.05 ? "text-emerald-400" : "text-amber-400"}`}>
+                        {Math.min(100, Math.round((selectedLiq.total_paid / selectedLiq.total_amount) * 100))}% cobrado (USD {selectedLiq.total_paid.toLocaleString("es-AR")} de USD {selectedLiq.total_amount.toLocaleString("es-AR")})
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          selectedLiq.pending_balance <= 0.05 ? "bg-emerald-400" : "bg-gradient-to-r from-amber-500 to-emerald-400"
+                        }`}
+                        style={{ width: `${Math.min(100, Math.round((selectedLiq.total_paid / selectedLiq.total_amount) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Split: Servicios & Cobros */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

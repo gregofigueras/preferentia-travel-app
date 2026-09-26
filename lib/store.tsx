@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import initialDataJson from "@/data/initialData.json";
 import { AppData, Liquidacion, CRMItem, UrgentTask, LegajoItem, PaymentItem, ServiceItem } from "@/types";
+import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
 
 interface AppContextType {
   data: AppData;
@@ -28,6 +29,8 @@ interface AppContextType {
   deleteUrgentTask: (id: string) => void;
   // Legajos
   addLegajo: (item: Omit<LegajoItem, "id">) => void;
+  // Notifications / Toast
+  showToast: (message: string, type?: "success" | "info" | "warning") => void;
   // Utils
   resetToDefaultData: () => void;
 }
@@ -39,6 +42,15 @@ const AppContext = createContext<AppContextType | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<AppData>(initialDataJson as unknown as AppData);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [toast, setToast] = useState<{ id: string; message: string; type: "success" | "info" | "warning" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "info" | "warning" = "success") => {
+    const id = String(Date.now());
+    setToast({ id, message, type });
+    setTimeout(() => {
+      setToast((prev) => (prev?.id === id ? null : prev));
+    }, 3200);
+  };
 
   // Load from LocalStorage on mount
   useEffect(() => {
@@ -85,6 +97,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       liquidaciones: [newLiq, ...data.liquidaciones],
     };
     persistData(updated);
+    showToast(`Ficha de "${item.client_name}" creada con éxito`, "success");
     return id;
   };
 
@@ -114,6 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...data,
       liquidaciones: data.liquidaciones.filter((l) => l.id !== id),
     });
+    showToast("Liquidación eliminada", "warning");
   };
 
   const addPaymentToLiquidacion = (liqId: string, payment: PaymentItem) => {
@@ -121,6 +135,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!liq) return;
     const newPayments = [...liq.payments, payment];
     updateLiquidacion(liqId, { payments: newPayments });
+    showToast(`Cobro registrado: USD ${payment.amount.toLocaleString("es-AR")}`, "success");
   };
 
   const deletePaymentFromLiquidacion = (liqId: string, paymentIndex: number) => {
@@ -228,6 +243,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ventas_cerradas_2026: [newCerrada, ...data.crm.ventas_cerradas_2026],
       },
     });
+    showToast("¡Venta confirmada y archivada en Ventas Cerradas! 🎉", "success");
   };
 
   const deleteCRMItem = (id: string) => {
@@ -240,6 +256,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ventas_cerradas_2026: data.crm.ventas_cerradas_2026.filter((i) => i.id !== id),
       },
     });
+    showToast("Elemento eliminado del CRM", "info");
   };
 
   const toggleUrgentTask = (id: string) => {
@@ -269,6 +286,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         urgencias_hoy: [newTask, ...data.crm.urgencias_hoy],
       },
     });
+    showToast("Tarea urgente agregada para hoy 📌", "info");
   };
 
   const deleteUrgentTask = (id: string) => {
@@ -316,10 +334,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addUrgentTask,
         deleteUrgentTask,
         addLegajo,
+        showToast,
         resetToDefaultData,
       }}
     >
       {children}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 animate-slide-up flex items-center space-x-3 px-4 py-3 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-white text-xs max-w-sm ring-1 ring-white/10"
+        >
+          {toast.type === "success" && <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+          {toast.type === "warning" && <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />}
+          {toast.type === "info" && <Info className="w-4 h-4 text-sky-400 flex-shrink-0" />}
+          <span className="font-medium flex-1 text-slate-100">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            aria-label="Cerrar notificación"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </AppContext.Provider>
   );
 };
