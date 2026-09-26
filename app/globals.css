@@ -3,15 +3,65 @@
 @tailwind utilities;
 
 :root {
+  /* ========================================================================= */
+  /* PREFERENTIA TRAVEL - DESIGN SYSTEM TOKENS */
+  /* ========================================================================= */
+  
+  /* Color Palette - Neutrals & Surfaces */
   --background: #020617;
   --foreground: #f8fafc;
+  --surface-ground: #020617;
+  --surface-card: rgba(15, 23, 42, 0.85);
+  --surface-elevated: #1e293b;
+  --surface-overlay: #0f172a;
+  
+  /* Brand Primary (Preferentia Sky) */
+  --brand-primary: #0284c7;
+  --brand-primary-hover: #0369a1;
+  --brand-light: #38bdf8;
+  --brand-glow: rgba(56, 189, 248, 0.25);
+
+  /* Semantic State Tokens */
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.12);
+  --color-success-border: rgba(16, 185, 129, 0.35);
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.35);
+
+  --color-danger: #f43f5e;
+  --color-danger-bg: rgba(244, 63, 94, 0.12);
+  --color-danger-border: rgba(244, 63, 94, 0.35);
+
+  --color-info: #0ea5e9;
+  --color-info-bg: rgba(14, 165, 233, 0.12);
+  --color-info-border: rgba(14, 165, 233, 0.35);
+
+  /* Typography */
+  --font-family-primary: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-family-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Borders & Radii */
+  --border-subtle: rgba(51, 65, 85, 0.55);
+  --border-focus: #38bdf8;
+  --radius-sm: 0.5rem;    /* 8px */
+  --radius-md: 0.75rem;   /* 12px */
+  --radius-lg: 1rem;      /* 16px */
+  --radius-xl: 1.25rem;   /* 20px */
+
+  /* Micro-transitions */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  letter-spacing: -0.01em;
+  font-family: var(--font-family-primary);
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Minimalist Dark Scrollbars */
@@ -33,33 +83,86 @@ body {
   background: #475569;
 }
 
-/* Tabular Numbers for financial data precision */
+/* Tabular Numbers for financial data precision & currency alignment */
 .font-mono, td, .tabular-nums {
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* Subtle Glassmorphism Card Effect */
+/* Glassmorphism Card System */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: var(--surface-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.45);
 }
 
 .glass-panel-hover {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--transition-normal);
 }
 
 .glass-panel-hover:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(56, 189, 248, 0.4);
-  transform: translateY(-1px);
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6), 0 0 15px -3px var(--brand-glow);
 }
 
-/* Focus styles for keyboard accessibility */
+/* Accessible Focus States (WCAG AA) */
 :focus-visible {
-  outline: 2px solid #38bdf8;
+  outline: 2px solid var(--brand-light);
   outline-offset: 2px;
+}
+
+/* Base Component Architecture */
+@layer components {
+  /* Interactive Buttons */
+  .btn-base {
+    @apply inline-flex items-center justify-center font-bold transition-all select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn-base px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/25 hover:shadow-sky-600/40;
+  }
+
+  .btn-secondary {
+    @apply btn-base px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80;
+  }
+
+  .btn-success {
+    @apply btn-base px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25;
+  }
+
+  .btn-danger {
+    @apply btn-base px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/25;
+  }
+
+  .btn-ghost {
+    @apply btn-base px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80;
+  }
+
+  /* Form Elements */
+  .input-control {
+    @apply bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 transition-all focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20;
+  }
+
+  /* Status Chips / Badges */
+  .badge-paid {
+    @apply inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/35;
+  }
+
+  .badge-partial {
+    @apply inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/35;
+  }
+
+  .badge-overdue {
+    @apply inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/35;
+  }
+
+  .badge-sky {
+    @apply inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/35;
+  }
 }
 
 @layer utilities {

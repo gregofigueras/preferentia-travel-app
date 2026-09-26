@@ -23,7 +23,8 @@ function NavigationContent() {
   const currentTab = searchParams.get("tab") || "seguimiento";
   const isHome = pathname === "/";
 
-  const pendingUrgentCount = data.crm.urgencias_hoy.filter(t => !t.completed).length;
+  const todayStr = new Date().toISOString().split("T")[0];
+  const overdueOrTodayCount = data.crm.urgencias_hoy.filter(t => !t.completed && (!t.date || t.date <= todayStr)).length;
   const pendingDebtCount = data.liquidaciones.filter(l => l.pending_balance > 0.05).length;
 
   const navItems = [
@@ -33,7 +34,7 @@ function NavigationContent() {
       tabKey: "seguimiento",
       href: "/?tab=seguimiento",
       icon: KanbanSquare,
-      badge: pendingUrgentCount > 0 ? `${pendingUrgentCount} urgentes` : undefined,
+      badge: overdueOrTodayCount > 0 ? `${overdueOrTodayCount} para hoy` : undefined,
       badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/30",
       activeColor: "bg-sky-500/10 text-sky-400 border-sky-500/30 shadow-sm shadow-sky-500/10",
       iconActive: "text-sky-400",

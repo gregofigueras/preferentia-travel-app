@@ -49,7 +49,11 @@ export interface UrgentTask {
   id: string;
   title: string;
   completed: boolean;
-  date?: string;
+  date?: string; // YYYY-MM-DD
+  time?: string; // e.g. "18:00"
+  category?: 'emision' | 'pago' | 'seguimiento' | 'voucher' | 'general';
+  priority?: 'alta' | 'media' | 'baja';
+  notes?: string;
 }
 
 export interface MonthEntry {

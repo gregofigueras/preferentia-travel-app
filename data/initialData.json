@@ -3904,13 +3904,38 @@
     "urgencias_hoy": [
       {
         "id": "hoy-3",
-        "title": "REPRO ACOSTA SILVINA",
-        "completed": false
+        "title": "REPRO ACOSTA SILVINA - Time Limit Aéreo",
+        "completed": false,
+        "date": "2026-09-26",
+        "time": "18:00",
+        "category": "emision",
+        "priority": "alta"
       },
       {
         "id": "hoy-4",
         "title": "Seguimiento IBERIA - Consumo duplicado",
-        "completed": false
+        "completed": false,
+        "date": "2026-09-26",
+        "time": "12:00",
+        "category": "seguimiento",
+        "priority": "media"
+      },
+      {
+        "id": "hoy-5",
+        "title": "Vencimiento seña Hotel Riu Cancún - Familia Gómez",
+        "completed": false,
+        "date": "2026-09-28",
+        "time": "15:00",
+        "category": "pago",
+        "priority": "alta"
+      },
+      {
+        "id": "hoy-6",
+        "title": "Emisión Vouchers y Asistencia Pax Martínez (Salida Oct)",
+        "completed": false,
+        "date": "2026-09-30",
+        "category": "voucher",
+        "priority": "media"
       }
     ],
     "propuestas_a_armar": [

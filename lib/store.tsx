@@ -23,10 +23,12 @@ interface AppContextType {
   moveCRMToSeguimiento: (id: string) => void;
   cerrarVentaCRM: (id: string, date: string, title: string) => void;
   deleteCRMItem: (id: string) => void;
-  // Urgent Tasks
+  // Urgent Tasks / Agenda
   toggleUrgentTask: (id: string) => void;
-  addUrgentTask: (title: string) => void;
+  addUrgentTask: (taskOrTitle: string | { title: string; date?: string; time?: string; category?: UrgentTask["category"]; priority?: UrgentTask["priority"]; notes?: string }) => void;
+  updateUrgentTask: (id: string, updates: Partial<UrgentTask>) => void;
   deleteUrgentTask: (id: string) => void;
+  postponeUrgentTask: (id: string, days?: number) => void;
   // Legajos
   addLegajo: (item: Omit<LegajoItem, "id">) => void;
   // Notifications / Toast
@@ -272,12 +274,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const addUrgentTask = (title: string) => {
+  const getLocalDateString = (d: Date = new Date()): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const addUrgentTask = (
+    param: string | { title: string; date?: string; time?: string; category?: UrgentTask["category"]; priority?: UrgentTask["priority"]; notes?: string }
+  ) => {
+    const isObj = typeof param === "object";
+    const title = (isObj ? param.title : param) || "";
+    const date = (isObj && param.date) ? param.date : getLocalDateString();
+    const time = isObj ? param.time : undefined;
+    const category = isObj ? param.category || "general" : "general";
+    const priority = isObj ? param.priority || "media" : "media";
+    const notes = isObj ? param.notes : undefined;
+
     const newTask: UrgentTask = {
       id: `task-${Date.now()}`,
-      title,
+      title: title.trim(),
       completed: false,
-      date: new Date().toISOString().split("T")[0],
+      date,
+      time,
+      category,
+      priority,
+      notes,
     };
     persistData({
       ...data,
@@ -286,7 +309,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         urgencias_hoy: [newTask, ...data.crm.urgencias_hoy],
       },
     });
-    showToast("Tarea urgente agregada para hoy 📌", "info");
+    showToast(`Alerta programada (${date}) 📅`, "info");
+  };
+
+  const updateUrgentTask = (id: string, updates: Partial<UrgentTask>) => {
+    const updatedTasks = data.crm.urgencias_hoy.map((t) =>
+      t.id === id ? { ...t, ...updates } : t
+    );
+    persistData({
+      ...data,
+      crm: {
+        ...data.crm,
+        urgencias_hoy: updatedTasks,
+      },
+    });
+  };
+
+  const postponeUrgentTask = (id: string, days: number = 1) => {
+    const task = data.crm.urgencias_hoy.find((t) => t.id === id);
+    if (!task) return;
+    const baseDate = task.date ? new Date(`${task.date}T12:00:00`) : new Date();
+    baseDate.setDate(baseDate.getDate() + days);
+    const newDateStr = getLocalDateString(baseDate);
+    updateUrgentTask(id, { date: newDateStr });
+    showToast(`Alerta pospuesta al ${newDateStr} (+${days}d) ⏰`, "info");
   };
 
   const deleteUrgentTask = (id: string) => {
@@ -297,6 +343,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         urgencias_hoy: data.crm.urgencias_hoy.filter((t) => t.id !== id),
       },
     });
+    showToast("Alerta eliminada", "info");
   };
 
   const addLegajo = (item: Omit<LegajoItem, "id">) => {
@@ -332,7 +379,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteCRMItem,
         toggleUrgentTask,
         addUrgentTask,
+        updateUrgentTask,
         deleteUrgentTask,
+        postponeUrgentTask,
         addLegajo,
         showToast,
         resetToDefaultData,

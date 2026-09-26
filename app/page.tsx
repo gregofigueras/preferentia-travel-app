@@ -21,7 +21,6 @@ import {
   Copy,
   Check,
   X,
-  Circle,
   ArrowRight,
   FileSpreadsheet,
   KanbanSquare,
@@ -29,6 +28,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { CalendarAlerts } from "@/components/CalendarAlerts";
 
 const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -50,9 +50,6 @@ function ExecutiveWorkspaceContent() {
     moveCRMToSeguimiento,
     cerrarVentaCRM,
     deleteCRMItem,
-    toggleUrgentTask,
-    addUrgentTask,
-    deleteUrgentTask,
     addLegajo,
     showToast
   } = useApp();
@@ -90,7 +87,6 @@ function ExecutiveWorkspaceContent() {
   // --------------------------------------------------------------------------
   // STATE: TAB 1 - SEGUIMIENTO & COTIZACIONES
   // --------------------------------------------------------------------------
-  const [newUrgentInput, setNewUrgentInput] = useState("");
   const [newPropArmar, setNewPropArmar] = useState("");
   const [newPropEnv, setNewPropEnv] = useState("");
   const [searchCerradas, setSearchCerradas] = useState("");
@@ -184,13 +180,6 @@ function ExecutiveWorkspaceContent() {
   const finalCommission = netBeforeSplit * (calcCommissionPct / 100);
 
   // Handlers TAB 1
-  const handleAddUrgent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newUrgentInput.trim()) return;
-    addUrgentTask(newUrgentInput.trim());
-    setNewUrgentInput("");
-  };
-
   const handleAddPropArmar = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPropArmar.trim()) return;
@@ -526,68 +515,8 @@ function ExecutiveWorkspaceContent() {
       {activeTab === "seguimiento" && (
         <div className="space-y-6 animate-in fade-in">
           
-          {/* HOY SI O SI (Urgencias Banner) */}
-          <div className="bg-slate-900/80 border border-rose-500/30 rounded-2xl p-5 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                <h2 className="text-sm font-extrabold text-white tracking-wider uppercase">HOY SI O SI · Tareas Urgentes</h2>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
-                  {data.crm.urgencias_hoy.filter(t => !t.completed).length} pendientes
-                </span>
-              </div>
-              
-              <form onSubmit={handleAddUrgent} className="flex gap-2 w-full sm:w-80">
-                <input
-                  type="text"
-                  placeholder="Agregar urgencia del día..."
-                  value={newUrgentInput}
-                  onChange={(e) => setNewUrgentInput(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
-                >
-                  Agregar
-                </button>
-              </form>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 mt-3">
-              {data.crm.urgencias_hoy.map((task) => (
-                <div
-                  key={task.id}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
-                    task.completed
-                      ? "bg-slate-950/40 border-slate-800/40 opacity-50"
-                      : "bg-slate-950/90 border-slate-800 hover:border-rose-500/40"
-                  }`}
-                >
-                  <button
-                    onClick={() => toggleUrgentTask(task.id)}
-                    className="flex items-center space-x-2 text-left flex-1 min-w-0"
-                  >
-                    {task.completed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                    )}
-                    <span className={`text-xs truncate ${task.completed ? "line-through text-slate-500" : "text-slate-200 font-medium"}`}>
-                      {task.title}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => deleteUrgentTask(task.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* AGENDA & ALERTAS PROGRAMADAS TIPO CALENDARIO */}
+          <CalendarAlerts />
 
           {/* Grid: Propuestas a armar + Seguimiento + Ventas Cerradas (Separado!) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

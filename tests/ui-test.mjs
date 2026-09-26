@@ -76,21 +76,35 @@ async function runUITests() {
     }
     console.log("✔ Branding 'PREFERENTIA TRAVEL' y 'Lautaro Zeppa' verificado.");
 
-    // Test Widget "HOY SI O SI": agregar tarea urgente
-    console.log("  -> Testeando widget de urgencias diarias ('HOY SI O SI')...");
-    const urgentInput = page.locator('input[placeholder="Agregar urgencia del día..."]');
+    // Test Módulo de Alertas & Agenda Programada
+    console.log("  -> Testeando módulo de Alertas & Agenda Programada...");
+    await page.click('button:has-text("Programar Alerta")');
+    await wait(300);
+
+    const urgentInput = page.locator('input[placeholder*="Time limit emisión aéreos"]');
     await urgentInput.fill("Reprogramar vuelos Arajet familia Gonzalez");
-    await page.click('button:has-text("Agregar")');
+    await page.click('button:has-text("Guardar en Calendario")');
     await wait(400);
 
     const hasNewTask = await page.locator('text="Reprogramar vuelos Arajet familia Gonzalez"').isVisible();
     if (!hasNewTask) throw new Error("La nueva tarea urgente no se agregó correctamente.");
-    console.log("  ✔ Nueva tarea urgente agregada exitosamente.");
+    console.log("  ✔ Nueva alerta programada en calendario exitosamente.");
 
-    // Marcar como completada
-    await page.click('button:has-text("Reprogramar vuelos Arajet familia Gonzalez")');
+    // Test cambio a vista Calendario mensual
+    await page.click('button:has-text("Calendario")');
     await wait(300);
-    console.log("  ✔ Tarea urgente marcada como completada.");
+    const hasCalendarGrid = await page.locator('text="Lun"').isVisible();
+    if (!hasCalendarGrid) throw new Error("La grilla de calendario mensual no se visualizó.");
+    console.log("  ✔ Vista de Calendario Mensual renderizada correctamente.");
+
+    // Test cambio a vista Agenda
+    await page.click('button:has-text("Agenda")');
+    await wait(300);
+    console.log("  ✔ Vista de Agenda cronológica renderizada correctamente.");
+
+    // Volver a vista Hoy
+    await page.click('button:has-text("Hoy")');
+    await wait(300);
 
     // Test Cerrar Venta en Seguimiento
     console.log("  -> Testeando flujo 'Cerrar Venta' (desaparece de seguimiento y entra en Ventas Cerradas)...");
