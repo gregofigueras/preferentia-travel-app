@@ -37,7 +37,6 @@ const MONTHS = [
 
 function ExecutiveWorkspaceContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "seguimiento";
   const { 
     data, 
     isLoaded, 
@@ -51,38 +50,18 @@ function ExecutiveWorkspaceContent() {
     cerrarVentaCRM,
     deleteCRMItem,
     addLegajo,
-    showToast
+    showToast,
+    activeTab,
+    setActiveTab,
   } = useApp();
 
-  // Active top-level workspace tab
-  const [activeTab, setActiveTab] = useState<"seguimiento" | "numeros" | "liquidaciones">(
-    initialTab as "seguimiento" | "numeros" | "liquidaciones"
-  );
-
-  // Sync tab with URL if changed
+  // Sync tab with URL searchParams if loaded from deep link / direct navigation
   useEffect(() => {
-    if (searchParams.get("tab")) {
-      const t = searchParams.get("tab");
-      if (t === "seguimiento" || t === "numeros" || t === "liquidaciones") {
-        setActiveTab(t);
-      }
+    const t = searchParams.get("tab");
+    if (t === "seguimiento" || t === "numeros" || t === "liquidaciones") {
+      setActiveTab(t);
     }
-  }, [searchParams]);
-
-  // Keyboard shortcut listener (keys 1, 2, 3 to switch views)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input or textarea
-      if (["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement).tagName)) {
-        return;
-      }
-      if (e.key === "1") setActiveTab("seguimiento");
-      if (e.key === "2") setActiveTab("numeros");
-      if (e.key === "3") setActiveTab("liquidaciones");
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [searchParams, setActiveTab]);
 
   // --------------------------------------------------------------------------
   // STATE: TAB 1 - SEGUIMIENTO & COTIZACIONES
@@ -155,6 +134,13 @@ function ExecutiveWorkspaceContent() {
   const [newLiqPax, setNewLiqPax] = useState(2);
   const [newLiqTotal, setNewLiqTotal] = useState<number>(0);
   const [newLiqInitialService, setNewLiqInitialService] = useState("Paquete Turístico Completo");
+
+  // Open modal if URL has ?nueva=true
+  useEffect(() => {
+    if (searchParams.get("nueva") === "true") {
+      setNewLiqModal(true);
+    }
+  }, [searchParams]);
 
   if (!isLoaded) {
     return (

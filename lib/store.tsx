@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import initialDataJson from "@/data/initialData.json";
 import { AppData, Liquidacion, CRMItem, UrgentTask, LegajoItem, PaymentItem, ServiceItem } from "@/types";
 import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
@@ -33,6 +33,9 @@ interface AppContextType {
   addLegajo: (item: Omit<LegajoItem, "id">) => void;
   // Notifications / Toast
   showToast: (message: string, type?: "success" | "info" | "warning") => void;
+  // Active Workspace Navigation
+  activeTab: "seguimiento" | "numeros" | "liquidaciones";
+  setActiveTab: (tab: "seguimiento" | "numeros" | "liquidaciones") => void;
   // Utils
   resetToDefaultData: () => void;
 }
@@ -44,7 +47,63 @@ const AppContext = createContext<AppContextType | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [data, setData] = useState<AppData>(initialDataJson as unknown as AppData);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeTab, setActiveTabState] = useState<"seguimiento" | "numeros" | "liquidaciones">("seguimiento");
   const [toast, setToast] = useState<{ id: string; message: string; type: "success" | "info" | "warning" } | null>(null);
+
+  const setActiveTab = useCallback((tab: "seguimiento" | "numeros" | "liquidaciones") => {
+    setActiveTabState(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.pathname === "/") {
+        url.searchParams.set("tab", tab);
+        window.history.replaceState(null, "", url.toString());
+      }
+    }
+  }, []);
+
+  // Sync initial tab from URL on mount & on browser back/forward
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const syncFromUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get("tab");
+        if (tabParam === "seguimiento" || tabParam === "numeros" || tabParam === "liquidaciones") {
+          setActiveTabState(tabParam);
+        }
+      };
+      syncFromUrl();
+      window.addEventListener("popstate", syncFromUrl);
+      return () => window.removeEventListener("popstate", syncFromUrl);
+    }
+  }, []);
+
+  // Global hotkeys (1, 2, 3) to switch tabs instantly anywhere in the app
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) {
+        return;
+      }
+      if (e.key === "1") {
+        setActiveTab("seguimiento");
+        if (window.location.pathname !== "/") {
+          window.location.href = "/?tab=seguimiento";
+        }
+      } else if (e.key === "2") {
+        setActiveTab("numeros");
+        if (window.location.pathname !== "/") {
+          window.location.href = "/?tab=numeros";
+        }
+      } else if (e.key === "3") {
+        setActiveTab("liquidaciones");
+        if (window.location.pathname !== "/") {
+          window.location.href = "/?tab=liquidaciones";
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setActiveTab]);
 
   const showToast = (message: string, type: "success" | "info" | "warning" = "success") => {
     const id = String(Date.now());
@@ -384,6 +443,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         postponeUrgentTask,
         addLegajo,
         showToast,
+        activeTab,
+        setActiveTab,
         resetToDefaultData,
       }}
     >

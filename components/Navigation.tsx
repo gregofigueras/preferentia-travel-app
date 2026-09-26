@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { 
   ReceiptText, 
   KanbanSquare, 
@@ -16,11 +16,9 @@ import { useApp } from "@/lib/store";
 
 function NavigationContent() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { data } = useApp();
+  const { data, activeTab, setActiveTab } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const currentTab = searchParams.get("tab") || "seguimiento";
   const isHome = pathname === "/";
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -89,12 +87,18 @@ function NavigationContent() {
           {/* Desktop Navigation (Tabs with Hotkey Badges) */}
           <nav className="hidden md:flex items-center space-x-1.5" aria-label="Navegación principal">
             {navItems.map((item) => {
-              const isTabActive = isHome ? currentTab === item.tabKey : pathname.startsWith(item.href.replace("/?tab=", "/"));
+              const isTabActive = isHome ? activeTab === item.tabKey : pathname.startsWith(item.href.replace("/?tab=", "/"));
               const Icon = item.icon;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={(e) => {
+                    if (isHome) {
+                      e.preventDefault();
+                      setActiveTab(item.tabKey as "seguimiento" | "numeros" | "liquidaciones");
+                    }
+                  }}
                   className={`group relative flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border ${
                     isTabActive
                       ? `${item.activeColor} border-current`
@@ -153,13 +157,19 @@ function NavigationContent() {
             Espacios de Trabajo
           </div>
           {navItems.map((item) => {
-            const isTabActive = isHome ? currentTab === item.tabKey : pathname.startsWith(item.href.replace("/?tab=", "/"));
+            const isTabActive = isHome ? activeTab === item.tabKey : pathname.startsWith(item.href.replace("/?tab=", "/"));
             const Icon = item.icon;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  if (isHome) {
+                    e.preventDefault();
+                    setActiveTab(item.tabKey as "seguimiento" | "numeros" | "liquidaciones");
+                  }
+                }}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
                   isTabActive
                     ? `${item.activeColor} border-current`
