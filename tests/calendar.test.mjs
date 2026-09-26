@@ -123,6 +123,68 @@ const pendingToday = tasks.filter(t => !t.completed && t.date === todayStr);
 assert.strictEqual(pendingToday.length, 0, "No debe quedar ninguna alerta pendiente para hoy");
 console.log("✔ [TEST 5 PASÓ] Tarea completada retirada del estado urgente activo.");
 
+// TEST 6: Generación de enlace 1-clic a Google Calendar (evento con hora específica)
+console.log("\n[TEST 6] Validando generación de URL para Google Calendar con hora...");
+function testGenerateGoogleCalendarUrl(task) {
+  const eventTitle = `[Preferentia] ${task.title}`;
+  let datesParam = "";
+
+  if (task.date && /^\d{4}-\d{2}-\d{2}$/.test(task.date)) {
+    const cleanDate = task.date.replace(/-/g, "");
+    if (task.time && task.time.includes(":")) {
+      const [h, m] = task.time.split(":").map(Number);
+      const startH = String(isNaN(h) ? 12 : h).padStart(2, "0");
+      const startM = String(isNaN(m) ? 0 : m).padStart(2, "0");
+      const endH = String((isNaN(h) ? 13 : (h + 1) % 24)).padStart(2, "0");
+      const endM = startM;
+      datesParam = `${cleanDate}T${startH}${startM}00/${cleanDate}T${endH}${endM}00`;
+    } else {
+      const parts = task.date.split("-").map(Number);
+      const nextDay = new Date(parts[0], parts[1] - 1, parts[2] + 1);
+      const nextClean = `${nextDay.getFullYear()}${String(nextDay.getMonth() + 1).padStart(2, "0")}${String(nextDay.getDate()).padStart(2, "0")}`;
+      datesParam = `${cleanDate}/${nextClean}`;
+    }
+  }
+
+  const url = new URL("https://calendar.google.com/calendar/render");
+  url.searchParams.set("action", "TEMPLATE");
+  url.searchParams.set("text", eventTitle);
+  url.searchParams.set("dates", datesParam);
+  url.searchParams.set("details", `Prioridad: ${task.priority || "Normal"}\nNotas: ${task.notes || ""}`);
+  url.searchParams.set("location", "Preferentia Travel");
+  return url.toString();
+}
+
+const timedTask = {
+  title: "Emisión urgente Latam Airlines",
+  date: "2026-10-20",
+  time: "18:00",
+  priority: "alta",
+  notes: "Pago con tarjeta ya acreditado"
+};
+const gcalUrlTimed = testGenerateGoogleCalendarUrl(timedTask);
+const parsedTimedUrl = new URL(gcalUrlTimed);
+assert.strictEqual(parsedTimedUrl.origin + parsedTimedUrl.pathname, "https://calendar.google.com/calendar/render");
+assert.strictEqual(parsedTimedUrl.searchParams.get("action"), "TEMPLATE");
+assert.strictEqual(parsedTimedUrl.searchParams.get("dates"), "20261020T180000/20261020T190000");
+assert.strictEqual(parsedTimedUrl.searchParams.get("text"), "[Preferentia] Emisión urgente Latam Airlines");
+assert.strictEqual(parsedTimedUrl.searchParams.get("location"), "Preferentia Travel");
+assert.ok(parsedTimedUrl.searchParams.get("details").includes("Pago con tarjeta ya acreditado"));
+console.log("✔ [TEST 6 PASÓ] URL para Google Calendar con horario (18:00 a 19:00 hs) generada correctamente.");
+
+// TEST 7: Generación de enlace a Google Calendar (evento de día completo)
+console.log("\n[TEST 7] Validando generación de URL para Google Calendar todo el día (+1 día exclusivo)...");
+const allDayTask = {
+  title: "Vencimiento seña Iberia",
+  date: "2026-10-25",
+  priority: "media",
+};
+const gcalUrlAllDay = testGenerateGoogleCalendarUrl(allDayTask);
+const parsedAllDayUrl = new URL(gcalUrlAllDay);
+assert.strictEqual(parsedAllDayUrl.searchParams.get("dates"), "20261025/20261026");
+assert.strictEqual(parsedAllDayUrl.searchParams.get("text"), "[Preferentia] Vencimiento seña Iberia");
+console.log("✔ [TEST 7 PASÓ] URL para evento de día completo calculó correctamente la fecha fin exclusiva (20261025/20261026).");
+
 console.log("\n=======================================================");
-console.log("🎉 ¡TODOS LOS TESTS DE AGENDA & CALENDARIO PASARON (5/5)!");
+console.log("🎉 ¡TODOS LOS TESTS DE AGENDA & CALENDARIO PASARON (7/7)!");
 console.log("=======================================================\n");

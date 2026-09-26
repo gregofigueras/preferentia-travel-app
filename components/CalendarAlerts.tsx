@@ -22,7 +22,9 @@ import {
   CalendarRange,
   X,
   Filter,
+  CalendarPlus,
 } from "lucide-react";
+import { generateGoogleCalendarUrl } from "@/lib/calendar";
 
 // Helper for local YYYY-MM-DD
 function getLocalDateString(d: Date = new Date()): string {
@@ -69,6 +71,7 @@ export function CalendarAlerts() {
   const [newCategory, setNewCategory] = useState<UrgentTask["category"]>("emision");
   const [newPriority, setNewPriority] = useState<UrgentTask["priority"]>("alta");
   const [newNotes, setNewNotes] = useState("");
+  const [syncWithGoogle, setSyncWithGoogle] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,14 +113,21 @@ export function CalendarAlerts() {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    addUrgentTask({
+    const taskPayload = {
       title: newTitle.trim(),
       date: newDate || todayStr,
       time: newTime || undefined,
       category: newCategory,
       priority: newPriority,
       notes: newNotes.trim() || undefined,
-    });
+    };
+
+    addUrgentTask(taskPayload);
+
+    if (syncWithGoogle && typeof window !== "undefined") {
+      const gcalUrl = generateGoogleCalendarUrl(taskPayload);
+      window.open(gcalUrl, "_blank", "noopener,noreferrer");
+    }
 
     setNewTitle("");
     setNewTime("");
@@ -318,6 +328,16 @@ export function CalendarAlerts() {
 
           {/* Quick Actions (touch target >= 44px) */}
           <div className="flex items-center gap-1 opacity-85 group-hover:opacity-100 transition-opacity">
+            <a
+              href={generateGoogleCalendarUrl(task)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center text-slate-400 hover:text-sky-400 p-2 rounded-lg hover:bg-slate-800/80 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400"
+              aria-label="Agendar en Google Calendar"
+              title="Agendar en Google Calendar (1 clic)"
+            >
+              <CalendarPlus className="w-4 h-4" />
+            </a>
             {!task.completed && (
               <button
                 onClick={() => postponeUrgentTask(task.id, 1)}
@@ -637,20 +657,35 @@ export function CalendarAlerts() {
             </div>
 
             {/* Submit & Cancel */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80">
-              <button
-                type="button"
-                onClick={() => setIsFormOpen(false)}
-                className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-md shadow-sky-600/20"
-              >
-                Guardar en Calendario
-              </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 hover:text-white select-none">
+                <input
+                  type="checkbox"
+                  checked={syncWithGoogle}
+                  onChange={(e) => setSyncWithGoogle(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 w-4 h-4 cursor-pointer"
+                />
+                <span className="flex items-center gap-1.5 font-medium">
+                  <CalendarPlus className="w-3.5 h-3.5 text-sky-400" />
+                  Abrir también en Google Calendar al guardar
+                </span>
+              </label>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[44px] px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-md shadow-sky-600/20"
+                >
+                  Guardar en Calendario
+                </button>
+              </div>
             </div>
           </div>
         </form>
