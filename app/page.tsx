@@ -391,17 +391,26 @@ function ExecutiveWorkspaceContent() {
 
           {/* Quick Metrics Bar across top */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 text-xs">
-            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800 flex-1 min-w-[120px]">
+            <div className="bg-slate-950/80 px-4 py-2.5 rounded-xl border border-slate-800/80 flex-1 min-w-[130px] shadow-sm">
               <span className="text-slate-400 block text-[10px] uppercase font-semibold tracking-wider">Total Facturado</span>
-              <span className="font-bold text-white text-sm sm:text-base font-mono">USD {totalFacturadoUSD.toLocaleString("es-AR")}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-[11px] font-medium text-slate-400 font-sans">USD</span>
+                <span className="font-bold text-white text-base sm:text-lg font-mono tabular-nums">{totalFacturadoUSD.toLocaleString("es-AR")}</span>
+              </div>
             </div>
-            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-slate-800 flex-1 min-w-[120px]">
+            <div className="bg-slate-950/80 px-4 py-2.5 rounded-xl border border-slate-800/80 flex-1 min-w-[130px] shadow-sm">
               <span className="text-emerald-400/90 block text-[10px] uppercase font-semibold tracking-wider">Total Cobrado</span>
-              <span className="font-bold text-emerald-400 text-sm sm:text-base font-mono">USD {totalCobradoUSD.toLocaleString("es-AR")}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-[11px] font-medium text-emerald-400/70 font-sans">USD</span>
+                <span className="font-bold text-emerald-400 text-base sm:text-lg font-mono tabular-nums">{totalCobradoUSD.toLocaleString("es-AR")}</span>
+              </div>
             </div>
-            <div className="bg-slate-950/80 px-3.5 py-2 rounded-xl border border-amber-500/30 flex-1 min-w-[120px]">
+            <div className="bg-slate-950/80 px-4 py-2.5 rounded-xl border border-slate-800/80 flex-1 min-w-[130px] shadow-sm">
               <span className="text-amber-400/90 block text-[10px] uppercase font-semibold tracking-wider">Saldo por Cobrar</span>
-              <span className="font-black text-amber-400 text-sm sm:text-base font-mono">USD {totalPendienteUSD.toLocaleString("es-AR")}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-[11px] font-medium text-amber-400/70 font-sans">USD</span>
+                <span className="font-bold text-amber-400 text-base sm:text-lg font-mono tabular-nums">{totalPendienteUSD.toLocaleString("es-AR")}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -417,57 +426,57 @@ function ExecutiveWorkspaceContent() {
               {pctCobrado}% cobrado ({countSaldadas} saldadas de {data.liquidaciones.length})
             </span>
           </div>
-          <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+          <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800/80">
             <div 
-              className="bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+              className="bg-emerald-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${pctCobrado}%` }}
             />
           </div>
         </div>
 
-        {/* 3 Main Display Tabs (The core UX shift Lautaro requested) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
+        {/* 3 Main Display Tabs (Unified Single Accent Personality) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-800/80">
           <button
             onClick={() => setActiveTab("seguimiento")}
-            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
               activeTab === "seguimiento"
-                ? "bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/20 scale-[1.01]"
-                : "bg-slate-950 hover:bg-slate-800/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white border border-sky-500/50 shadow-sm ring-1 ring-sky-500/20"
+                : "bg-slate-950/80 hover:bg-slate-800/70 text-slate-300 hover:text-white border border-slate-800/80"
             }`}
           >
-            <KanbanSquare className="w-4 h-4" />
+            <KanbanSquare className="w-4 h-4 text-sky-400" />
             <span>1. Seguimiento & Cotizaciones</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${activeTab === "seguimiento" ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "seguimiento" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "bg-slate-800 text-slate-400"}`}>
               {data.crm.propuestas_a_armar.length + data.crm.propuestas_enviadas.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab("numeros")}
-            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
               activeTab === "numeros"
-                ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 scale-[1.01]"
-                : "bg-slate-950 hover:bg-slate-800/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white border border-sky-500/50 shadow-sm ring-1 ring-sky-500/20"
+                : "bg-slate-950/80 hover:bg-slate-800/70 text-slate-300 hover:text-white border border-slate-800/80"
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4 text-sky-400" />
             <span>2. Mis Números & Legajos</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${activeTab === "numeros" ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "numeros" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "bg-slate-800 text-slate-400"}`}>
               {data.legajos.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab("liquidaciones")}
-            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center justify-center space-x-2.5 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all min-h-[44px] ${
               activeTab === "liquidaciones"
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 scale-[1.01]"
-                : "bg-slate-950 hover:bg-slate-800/80 text-slate-300 hover:text-white border border-slate-800"
+                ? "bg-slate-800 text-white border border-sky-500/50 shadow-sm ring-1 ring-sky-500/20"
+                : "bg-slate-950/80 hover:bg-slate-800/70 text-slate-300 hover:text-white border border-slate-800/80"
             }`}
           >
-            <ReceiptText className="w-4 h-4" />
+            <ReceiptText className="w-4 h-4 text-sky-400" />
             <span>3. Liquidaciones & Fichas</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${activeTab === "liquidaciones" ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "liquidaciones" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "bg-slate-800 text-slate-400"}`}>
               66 viajes
             </span>
           </button>
@@ -540,29 +549,40 @@ function ExecutiveWorkspaceContent() {
                   placeholder="Pasajero y destino a cotizar..."
                   value={newPropArmar}
                   onChange={(e) => setNewPropArmar(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
-                <button type="submit" className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold">
-                  +
+                <button
+                  type="submit"
+                  className="min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold border border-slate-700 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-sky-400"
+                  aria-label="Agregar propuesta a armar"
+                  title="Agregar propuesta a armar"
+                >
+                  <Plus className="w-4 h-4" />
                 </button>
               </form>
 
               <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[600px] pr-1">
                 {data.crm.propuestas_a_armar.map((item) => (
-                  <div key={item.id} className="bg-slate-950/90 border border-slate-800 hover:border-amber-500/40 rounded-xl p-3 shadow-sm group space-y-2">
+                  <div key={item.id} className="bg-slate-950/90 border border-slate-800/80 hover:border-slate-700 rounded-xl p-3 shadow-sm group space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-xs font-semibold text-slate-200 leading-snug">{item.title}</span>
-                      <button onClick={() => deleteCRMItem(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-0.5">
-                        <Trash2 className="w-3 h-3" />
+                      <button
+                        onClick={() => deleteCRMItem(item.id)}
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-rose-400"
+                        aria-label="Eliminar propuesta"
+                        title="Eliminar propuesta"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <div className="pt-2 border-t border-slate-800/80 flex justify-end">
                       <button
                         onClick={() => moveCRMToSeguimiento(item.id)}
-                        className="inline-flex items-center space-x-1 text-[11px] font-semibold text-sky-400 hover:text-sky-300"
+                        className="inline-flex items-center space-x-1 min-h-[36px] px-2 py-1 text-xs font-semibold text-sky-400 hover:text-sky-300 focus-visible:ring-2 focus-visible:ring-sky-400 rounded-lg"
+                        aria-label={`Mover ${item.title} a seguimiento`}
                       >
                         <span>Pasar a Seguimiento</span>
-                        <ChevronRight className="w-3 h-3" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -571,7 +591,7 @@ function ExecutiveWorkspaceContent() {
             </div>
 
             {/* Columna 2: Propuestas Enviadas & Seguimiento */}
-            <div className="bg-slate-900/70 border border-sky-500/20 rounded-2xl p-4 flex flex-col min-h-[550px]">
+            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col min-h-[550px]">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
                 <div className="flex items-center space-x-2">
                   <Send className="w-4 h-4 text-sky-400" />
@@ -589,31 +609,42 @@ function ExecutiveWorkspaceContent() {
                   placeholder="Nueva propuesta enviada..."
                   value={newPropEnv}
                   onChange={(e) => setNewPropEnv(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
-                <button type="submit" className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold">
-                  +
+                <button
+                  type="submit"
+                  className="min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-sm transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-sky-400"
+                  aria-label="Agregar propuesta enviada"
+                  title="Agregar propuesta enviada"
+                >
+                  <Plus className="w-4 h-4" />
                 </button>
               </form>
 
               <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[600px] pr-1">
                 {data.crm.propuestas_enviadas.map((item) => (
-                  <div key={item.id} className="bg-slate-950/90 border border-slate-800 hover:border-sky-500/40 rounded-xl p-3 shadow-sm group space-y-2">
+                  <div key={item.id} className="bg-slate-950/90 border border-slate-800/80 hover:border-slate-700 rounded-xl p-3 shadow-sm group space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-xs font-semibold text-white leading-snug">{item.title}</span>
-                      <button onClick={() => deleteCRMItem(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 p-0.5">
-                        <Trash2 className="w-3 h-3" />
+                      <button
+                        onClick={() => deleteCRMItem(item.id)}
+                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-400 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-rose-400"
+                        aria-label="Eliminar propuesta"
+                        title="Eliminar propuesta"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
-                    {/* Botón Cerrar Venta: Lautaro pidió que al cerrar se saque de seguimiento y pase al panel de ventas cerradas */}
+                    {/* Botón Cerrar Venta */}
                     <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-500">Esperando respuesta</span>
+                      <span className="text-[11px] text-slate-400 font-medium">Esperando respuesta</span>
                       <button
                         onClick={() => openCloseSale(item)}
-                        className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-colors"
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 min-h-[44px] rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-emerald-400"
+                        aria-label={`Cerrar venta ${item.title}`}
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                         <span>Cerrar Venta</span>
                       </button>
                     </div>
@@ -623,7 +654,7 @@ function ExecutiveWorkspaceContent() {
             </div>
 
             {/* Columna 3: Ventas Cerradas (Panel Separado como pidió Lautaro) */}
-            <div className="bg-slate-900/70 border border-emerald-500/30 rounded-2xl p-4 flex flex-col min-h-[550px]">
+            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col min-h-[550px]">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -633,16 +664,16 @@ function ExecutiveWorkspaceContent() {
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => setCerradasYear("2026")}
-                    className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
-                      cerradasYear === "2026" ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400"
+                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      cerradasYear === "2026" ? "bg-slate-800 text-white border border-slate-700" : "text-slate-400 hover:text-white"
                     }`}
                   >
                     2026 ({data.crm.ventas_cerradas_2026.length})
                   </button>
                   <button
                     onClick={() => setCerradasYear("2025")}
-                    className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
-                      cerradasYear === "2025" ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400"
+                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      cerradasYear === "2025" ? "bg-slate-800 text-white border border-slate-700" : "text-slate-400 hover:text-white"
                     }`}
                   >
                     2025 ({data.crm.ventas_cerradas_2025.length})
@@ -652,13 +683,13 @@ function ExecutiveWorkspaceContent() {
 
               {/* Search Cerradas */}
               <div className="relative mb-3">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2" />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
                   placeholder="Buscar venta cerrada..."
                   value={searchCerradas}
                   onChange={(e) => setSearchCerradas(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
@@ -667,11 +698,11 @@ function ExecutiveWorkspaceContent() {
                 {(cerradasYear === "2026" ? data.crm.ventas_cerradas_2026 : data.crm.ventas_cerradas_2025)
                   .filter((i) => !searchCerradas.trim() || i.title.toLowerCase().includes(searchCerradas.toLowerCase()))
                   .map((item) => (
-                    <div key={item.id} className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-2.5 text-xs space-y-1">
+                    <div key={item.id} className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-3 text-xs space-y-1.5">
                       <div className="font-semibold text-white">{item.title}</div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-900">
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 text-slate-500" />
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-900">
+                        <span className="flex items-center space-x-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>{item.date || "Fecha reg."}</span>
                         </span>
                         <button
@@ -680,9 +711,11 @@ function ExecutiveWorkspaceContent() {
                             setNewLiqDest(item.title.includes("-") ? item.title.split("-")[1].trim() : "Destino");
                             setNewLiqModal(true);
                           }}
-                          className="text-sky-400 hover:text-sky-300 font-semibold"
+                          className="min-h-[36px] px-2.5 py-1 text-sky-400 hover:text-sky-300 font-semibold rounded-lg hover:bg-slate-900 transition-colors focus-visible:ring-2 focus-visible:ring-sky-400 flex items-center gap-1"
+                          aria-label={`Liquidar ${item.title}`}
                         >
-                          + Liquidar
+                          <Plus className="w-3 h-3" />
+                          <span>Liquidar</span>
                         </button>
                       </div>
                     </div>
@@ -1092,7 +1125,7 @@ function ExecutiveWorkspaceContent() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={copyWhatsApp}
-                      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      className={`inline-flex items-center space-x-2 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all border focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                         whatsappCopied
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                           : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
@@ -1103,7 +1136,7 @@ function ExecutiveWorkspaceContent() {
                     </button>
                     <button
                       onClick={openWhatsAppWeb}
-                      className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-all"
+                      className="hidden sm:inline-flex items-center space-x-2 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-all focus-visible:ring-2 focus-visible:ring-emerald-400"
                       title="Abrir directamente en WhatsApp Web con el resumen listo"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
@@ -1111,7 +1144,8 @@ function ExecutiveWorkspaceContent() {
                     </button>
                     <Link
                       href={`/liquidaciones/${selectedLiq.id}`}
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 focus-visible:ring-2 focus-visible:ring-sky-400 transition-colors"
+                      aria-label="Abrir liquidación en pantalla completa"
                       title="Abrir en pantalla completa"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -1119,28 +1153,37 @@ function ExecutiveWorkspaceContent() {
                   </div>
                 </div>
 
-                {/* 3 Status KPI Boxes */}
+                {/* 3 Status KPI Boxes (2:1 typography ratio) */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] text-slate-400 uppercase font-semibold">Total a Abonar</span>
-                    <div className="text-base sm:text-lg font-bold text-white mt-0.5 font-mono">
-                      USD {selectedLiq.total_amount.toLocaleString("es-AR")}
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className="text-[11px] font-medium text-slate-400 font-sans">USD</span>
+                      <span className="text-base sm:text-lg font-bold text-white font-mono tabular-nums">
+                        {selectedLiq.total_amount.toLocaleString("es-AR")}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold">Total Cobrado</span>
-                    <div className="text-base sm:text-lg font-bold text-emerald-400 mt-0.5 font-mono">
-                      USD {selectedLiq.total_paid.toLocaleString("es-AR")}
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <span className="text-[10px] text-emerald-400/80 uppercase font-semibold">Total Cobrado</span>
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className="text-[11px] font-medium text-emerald-400/70 font-sans">USD</span>
+                      <span className="text-base sm:text-lg font-bold text-emerald-400 font-mono tabular-nums">
+                        {selectedLiq.total_paid.toLocaleString("es-AR")}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="bg-slate-950 p-3 rounded-xl border border-amber-500/30">
+                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] text-amber-400/80 uppercase font-semibold">Saldo Pendiente</span>
-                    <div className={`text-base sm:text-lg font-black mt-0.5 font-mono ${
-                      selectedLiq.pending_balance <= 0.05 ? "text-emerald-400" : "text-amber-400"
-                    }`}>
-                      {selectedLiq.pending_balance <= 0.05 ? "USD 0.00" : `USD ${selectedLiq.pending_balance.toLocaleString("es-AR")}`}
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className="text-[11px] font-medium text-amber-400/70 font-sans">USD</span>
+                      <span className={`text-base sm:text-lg font-black font-mono tabular-nums ${
+                        selectedLiq.pending_balance <= 0.05 ? "text-emerald-400" : "text-amber-400"
+                      }`}>
+                        {selectedLiq.pending_balance <= 0.05 ? "0.00" : selectedLiq.pending_balance.toLocaleString("es-AR")}
+                      </span>
                     </div>
                   </div>
                 </div>

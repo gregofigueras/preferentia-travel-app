@@ -234,16 +234,17 @@ export function CalendarAlerts() {
         }`}
       >
         <div className="flex items-start justify-between gap-2.5">
-          <div className="flex items-start space-x-2.5 flex-1 min-w-0">
+          <div className="flex items-start space-x-1.5 flex-1 min-w-0">
             <button
               onClick={() => toggleUrgentTask(task.id)}
-              className="mt-0.5 text-slate-400 hover:text-white flex-shrink-0 transition-transform active:scale-90"
+              className="mt-0.5 text-slate-400 hover:text-white flex-shrink-0 transition-transform active:scale-90 min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center p-2 rounded-lg focus-visible:ring-2 focus-visible:ring-sky-400"
+              aria-label={task.completed ? "Marcar alerta como pendiente" : "Marcar alerta como realizada"}
               title={task.completed ? "Marcar como pendiente" : "Marcar como realizada"}
             >
               {task.completed ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               ) : isOverdue ? (
-                <AlertTriangle className="w-4 h-4 text-rose-400 animate-pulse" />
+                <AlertTriangle className="w-4 h-4 text-rose-400 motion-safe:animate-pulse" />
               ) : isToday ? (
                 <Flame className="w-4 h-4 text-amber-400" />
               ) : (
@@ -251,7 +252,7 @@ export function CalendarAlerts() {
               )}
             </button>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pt-1">
               <div className="flex items-center gap-1.5 flex-wrap mb-1">
                 {/* Category Pill */}
                 <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md border ${catDetails.color}`}>
@@ -277,7 +278,7 @@ export function CalendarAlerts() {
                   }`}
                 >
                   <CalendarIcon className="w-2.5 h-2.5" />
-                  {isOverdue ? `⚠️ Venció (${formatDisplayDate(task.date)})` : isToday ? "Hoy" : formatDisplayDate(task.date)}
+                  {isOverdue ? `Vencida (${formatDisplayDate(task.date)})` : isToday ? "Hoy" : formatDisplayDate(task.date)}
                   {task.time && <span className="opacity-80 font-mono">· {task.time} hs</span>}
                 </span>
               </div>
@@ -294,12 +295,13 @@ export function CalendarAlerts() {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+          {/* Quick Actions (touch target >= 44px) */}
+          <div className="flex items-center gap-1 opacity-85 group-hover:opacity-100 transition-opacity">
             {!task.completed && (
               <button
                 onClick={() => postponeUrgentTask(task.id, 1)}
-                className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-sky-600 hover:text-white text-slate-300 border border-slate-700 transition-colors"
+                className="min-h-[36px] sm:min-h-[44px] px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-sky-600 hover:text-white text-slate-300 border border-slate-700/60 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-sky-400"
+                aria-label="Posponer al día siguiente"
                 title="Postponer al día siguiente (+1 día)"
               >
                 +1d
@@ -307,10 +309,11 @@ export function CalendarAlerts() {
             )}
             <button
               onClick={() => deleteUrgentTask(task.id)}
-              className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800/80 transition-colors"
+              className="min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center text-slate-400 hover:text-rose-400 p-2 rounded-lg hover:bg-slate-800/80 transition-colors focus-visible:ring-2 focus-visible:ring-rose-400"
+              aria-label="Eliminar alerta"
               title="Eliminar alerta"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -532,39 +535,42 @@ export function CalendarAlerts() {
                 <label className="text-[11px] font-semibold text-slate-300">
                   Nivel de Prioridad
                 </label>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => setNewPriority("alta")}
-                    className={`py-2 px-1 text-center rounded-xl text-[10px] font-bold border transition-all ${
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 min-h-[44px] ${
                       newPriority === "alta"
-                        ? "bg-rose-500/20 text-rose-300 border-rose-500/40"
-                        : "bg-slate-900 text-slate-400 border-slate-800"
+                        ? "bg-rose-500/15 text-rose-300 border-rose-500/40"
+                        : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-300"
                     }`}
                   >
-                    🔴 Alta
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span>Alta</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setNewPriority("media")}
-                    className={`py-2 px-1 text-center rounded-xl text-[10px] font-bold border transition-all ${
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 min-h-[44px] ${
                       newPriority === "media"
-                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                        : "bg-slate-900 text-slate-400 border-slate-800"
+                        ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                        : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-300"
                     }`}
                   >
-                    🟡 Media
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span>Media</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setNewPriority("baja")}
-                    className={`py-2 px-1 text-center rounded-xl text-[10px] font-bold border transition-all ${
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 min-h-[44px] ${
                       newPriority === "baja"
-                        ? "bg-sky-500/20 text-sky-300 border-sky-500/40"
-                        : "bg-slate-900 text-slate-400 border-slate-800"
+                        ? "bg-sky-500/15 text-sky-300 border-sky-500/40"
+                        : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-300"
                     }`}
                   >
-                    🔵 Normal
+                    <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                    <span>Normal</span>
                   </button>
                 </div>
               </div>
@@ -577,25 +583,29 @@ export function CalendarAlerts() {
               </label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { key: "emision", label: "✈️ Emisión Aéreo / Time-Limit", color: "border-sky-500/40 text-sky-300 bg-sky-500/10" },
-                  { key: "pago", label: "💳 Vencimiento Cobro / Seña", color: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
-                  { key: "seguimiento", label: "📞 Seguimiento Comercial", color: "border-amber-500/40 text-amber-300 bg-amber-500/10" },
-                  { key: "voucher", label: "🎫 Vouchers & Check-In", color: "border-purple-500/40 text-purple-300 bg-purple-500/10" },
-                  { key: "general", label: "📌 Tarea General", color: "border-slate-700 text-slate-300 bg-slate-800" },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setNewCategory(item.key as UrgentTask["category"])}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                      newCategory === item.key
-                        ? item.color + " ring-1 ring-white/20"
-                        : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                  { key: "emision", label: "Emisión Aéreo / Time-Limit", icon: Plane, color: "border-sky-500/40 text-sky-300 bg-sky-500/10" },
+                  { key: "pago", label: "Vencimiento Cobro / Seña", icon: CreditCard, color: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
+                  { key: "seguimiento", label: "Seguimiento Comercial", icon: PhoneCall, color: "border-amber-500/40 text-amber-300 bg-amber-500/10" },
+                  { key: "voucher", label: "Vouchers & Check-In", icon: FileCheck, color: "border-purple-500/40 text-purple-300 bg-purple-500/10" },
+                  { key: "general", label: "Tarea General", icon: Tag, color: "border-slate-700 text-slate-300 bg-slate-800" },
+                ].map((item) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setNewCategory(item.key as UrgentTask["category"])}
+                      className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                        newCategory === item.key
+                          ? item.color + " ring-1 ring-white/20"
+                          : "bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200"
+                      }`}
+                    >
+                      <ItemIcon className="w-3.5 h-3.5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -604,13 +614,13 @@ export function CalendarAlerts() {
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/20"
+                className="min-h-[44px] px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-md shadow-sky-600/20"
               >
                 Guardar en Calendario
               </button>
@@ -628,24 +638,28 @@ export function CalendarAlerts() {
             <Filter className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[11px] font-semibold text-slate-400 mr-1">Filtrar:</span>
             {[
-              { id: "todas", label: "Todas" },
-              { id: "emision", label: "✈️ Emisiones" },
-              { id: "pago", label: "💳 Pagos / Señas" },
-              { id: "seguimiento", label: "📞 Seguimientos" },
-              { id: "voucher", label: "🎫 Vouchers" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setSelectedCategory(f.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
-                  selectedCategory === f.id
-                    ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+              { id: "todas", label: "Todas", icon: null },
+              { id: "emision", label: "Emisiones", icon: Plane },
+              { id: "pago", label: "Pagos / Señas", icon: CreditCard },
+              { id: "seguimiento", label: "Seguimientos", icon: PhoneCall },
+              { id: "voucher", label: "Vouchers", icon: FileCheck },
+            ].map((f) => {
+              const FIcon = f.icon;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedCategory(f.id)}
+                  className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    selectedCategory === f.id
+                      ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                  }`}
+                >
+                  {FIcon && <FIcon className="w-3.5 h-3.5" />}
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <span className="text-[11px] text-slate-400 font-mono whitespace-nowrap">
