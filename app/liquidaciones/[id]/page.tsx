@@ -114,6 +114,7 @@ export default function LiquidacionDetailPage() {
 
     addPaymentToLiquidacion(liq.id, newPayment);
     setPaymentAmount(0);
+    setPaymentCurrency("USD");
     setPaymentNotes("");
     setIsAddingPayment(false);
   };
