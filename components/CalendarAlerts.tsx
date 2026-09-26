@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { UrgentTask } from "@/types";
 import {
@@ -69,6 +69,27 @@ export function CalendarAlerts() {
   const [newCategory, setNewCategory] = useState<UrgentTask["category"]>("emision");
   const [newPriority, setNewPriority] = useState<UrgentTask["priority"]>("alta");
   const [newNotes, setNewNotes] = useState("");
+
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsFormOpen(true);
+      setTimeout(() => {
+        titleInputRef.current?.focus();
+        titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 60);
+    };
+    const handleClose = () => {
+      setIsFormOpen(false);
+    };
+    window.addEventListener("open-schedule-alert", handleOpen);
+    window.addEventListener("close-schedule-alert", handleClose);
+    return () => {
+      window.removeEventListener("open-schedule-alert", handleOpen);
+      window.removeEventListener("close-schedule-alert", handleClose);
+    };
+  }, []);
 
   const tasks = data.crm.urgencias_hoy;
 
@@ -414,6 +435,11 @@ export function CalendarAlerts() {
           >
             {isFormOpen ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
             <span>{isFormOpen ? "Cerrar" : "Programar Alerta"}</span>
+            {!isFormOpen && (
+              <kbd className="hidden sm:inline-block text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-950/80 border border-rose-400/40 text-rose-200">
+                Alt+P
+              </kbd>
+            )}
           </button>
         </div>
       </div>
@@ -441,6 +467,7 @@ export function CalendarAlerts() {
                   Título de la alerta o gestión *
                 </label>
                 <input
+                  ref={titleInputRef}
                   type="text"
                   required
                   placeholder="Ej: Time limit emisión aéreos Silvina Acosta (Iberia)..."

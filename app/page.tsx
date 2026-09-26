@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { 
@@ -62,6 +62,13 @@ function ExecutiveWorkspaceContent() {
       setActiveTab(t);
     }
   }, [searchParams, setActiveTab]);
+
+  // Input & search refs for instant keyboard shortcuts
+  const propArmarInputRef = useRef<HTMLInputElement>(null);
+  const searchCerradasInputRef = useRef<HTMLInputElement>(null);
+  const searchLegajoInputRef = useRef<HTMLInputElement>(null);
+  const searchLiqInputRef = useRef<HTMLInputElement>(null);
+  const copyWhatsAppRef = useRef<() => void>();
 
   // --------------------------------------------------------------------------
   // STATE: TAB 1 - SEGUIMIENTO & COTIZACIONES
@@ -141,6 +148,70 @@ function ExecutiveWorkspaceContent() {
       setNewLiqModal(true);
     }
   }, [searchParams]);
+
+  // Listen for global custom events triggered by hotkeys
+  useEffect(() => {
+    const handleOpenNewLiq = () => {
+      setNewLiqModal(true);
+    };
+
+    const handleOpenNewLeg = () => {
+      setNewLegModal(true);
+    };
+
+    const handleFocusCotizacion = () => {
+      setTimeout(() => {
+        propArmarInputRef.current?.focus();
+        propArmarInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 70);
+    };
+
+    const handleCopyWhatsApp = () => {
+      if (activeTab !== "liquidaciones") {
+        setActiveTab("liquidaciones");
+        setTimeout(() => {
+          copyWhatsAppRef.current?.();
+        }, 120);
+      } else {
+        copyWhatsAppRef.current?.();
+      }
+    };
+
+    const handleFocusSearch = () => {
+      if (activeTab === "liquidaciones") {
+        searchLiqInputRef.current?.focus();
+        searchLiqInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (activeTab === "numeros") {
+        searchLegajoInputRef.current?.focus();
+        searchLegajoInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        searchCerradasInputRef.current?.focus();
+        searchCerradasInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    };
+
+    const handleCloseModals = () => {
+      setNewLiqModal(false);
+      setNewLegModal(false);
+      setCloseSaleModal((prev) => ({ ...prev, isOpen: false }));
+    };
+
+    window.addEventListener("open-new-liquidacion", handleOpenNewLiq);
+    window.addEventListener("open-new-legajo", handleOpenNewLeg);
+    window.addEventListener("focus-new-cotizacion", handleFocusCotizacion);
+    window.addEventListener("trigger-copy-whatsapp", handleCopyWhatsApp);
+    window.addEventListener("focus-search-input", handleFocusSearch);
+    window.addEventListener("close-modals", handleCloseModals);
+
+    return () => {
+      window.removeEventListener("open-new-liquidacion", handleOpenNewLiq);
+      window.removeEventListener("open-new-legajo", handleOpenNewLeg);
+      window.removeEventListener("focus-new-cotizacion", handleFocusCotizacion);
+      window.removeEventListener("trigger-copy-whatsapp", handleCopyWhatsApp);
+      window.removeEventListener("focus-search-input", handleFocusSearch);
+      window.removeEventListener("close-modals", handleCloseModals);
+    };
+  }, [activeTab, setActiveTab]);
 
   if (!isLoaded) {
     return (
@@ -316,6 +387,7 @@ function ExecutiveWorkspaceContent() {
     showToast("Resumen de liquidación copiado para WhatsApp 📋", "success");
     setTimeout(() => setWhatsappCopied(false), 2500);
   };
+  copyWhatsAppRef.current = copyWhatsApp;
 
   const openWhatsAppWeb = () => {
     const text = getWhatsAppMessage();
@@ -496,10 +568,14 @@ function ExecutiveWorkspaceContent() {
           </div>
           <button
             onClick={() => setNewLiqModal(true)}
-            className="text-sky-400 hover:text-sky-300 font-semibold flex items-center space-x-1.5 transition-colors self-start sm:self-auto"
+            className="text-sky-400 hover:text-sky-300 font-semibold flex items-center space-x-1.5 transition-colors self-start sm:self-auto group"
+            title="Nueva Liquidación Rápida (Alt + L)"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nueva Liquidación Rápida</span>
+            <kbd className="hidden sm:inline-block text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-sky-950/80 border border-sky-400/40 text-sky-300">
+              Alt+L
+            </kbd>
           </button>
         </div>
       </div>
@@ -530,13 +606,19 @@ function ExecutiveWorkspaceContent() {
 
               {/* Quick Add */}
               <form onSubmit={handleAddPropArmar} className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  placeholder="Pasajero y destino a cotizar..."
-                  value={newPropArmar}
-                  onChange={(e) => setNewPropArmar(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-                />
+                <div className="relative flex-1">
+                  <input
+                    ref={propArmarInputRef}
+                    type="text"
+                    placeholder="Pasajero y destino a cotizar..."
+                    value={newPropArmar}
+                    onChange={(e) => setNewPropArmar(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-14 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                  />
+                  <kbd className="hidden sm:inline-block absolute right-2.5 top-2.5 px-1.5 py-0.2 text-[9px] font-mono text-amber-300 bg-amber-950/80 border border-amber-500/30 rounded">
+                    Alt+C
+                  </kbd>
+                </div>
                 <button
                   type="submit"
                   className="min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold border border-slate-700 transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-sky-400"
@@ -671,12 +753,16 @@ function ExecutiveWorkspaceContent() {
               <div className="relative mb-3">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                 <input
+                  ref={searchCerradasInputRef}
                   type="text"
                   placeholder="Buscar venta cerrada..."
                   value={searchCerradas}
                   onChange={(e) => setSearchCerradas(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                 />
+                <kbd className="hidden sm:inline-block absolute right-2.5 top-2.5 px-1.5 py-0.2 text-[9px] font-mono text-slate-400 bg-slate-800 rounded border border-slate-700">
+                  /
+                </kbd>
               </div>
 
               {/* List of Closed Sales */}
@@ -889,19 +975,27 @@ function ExecutiveWorkspaceContent() {
                 <div className="relative w-64">
                   <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
                   <input
+                    ref={searchLegajoInputRef}
                     type="text"
                     placeholder="Buscar cliente o N° LEG..."
                     value={searchLegajo}
                     onChange={(e) => setSearchLegajo(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                   />
+                  <kbd className="hidden sm:inline-block absolute right-2 top-2 px-1.5 py-0.2 text-[9px] font-mono text-slate-400 bg-slate-800 rounded border border-slate-700">
+                    /
+                  </kbd>
                 </div>
 
                 <button
                   onClick={() => setNewLegModal(true)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold whitespace-nowrap"
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shadow-sm"
+                  title="Nuevo Legajo (Alt + M)"
                 >
-                  + Agregar Legajo
+                  <span>+ Agregar Legajo</span>
+                  <kbd className="hidden sm:inline-block text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-indigo-950/80 border border-indigo-400/40 text-indigo-200">
+                    Alt+M
+                  </kbd>
                 </button>
               </div>
             </div>
@@ -993,9 +1087,13 @@ function ExecutiveWorkspaceContent() {
               </div>
               <button
                 onClick={() => setNewLiqModal(true)}
-                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5"
+                title="Nueva Liquidación (Alt + L)"
               >
-                + Nuevo
+                <span>+ Nuevo</span>
+                <kbd className="hidden sm:inline-block text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-400/40 text-emerald-200">
+                  Alt+L
+                </kbd>
               </button>
             </div>
 
@@ -1003,12 +1101,16 @@ function ExecutiveWorkspaceContent() {
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
               <input
+                ref={searchLiqInputRef}
                 type="text"
                 placeholder="Buscar cliente, destino..."
                 value={searchLiq}
                 onChange={(e) => setSearchLiq(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
+              <kbd className="hidden sm:inline-block absolute right-2 top-2 px-1.5 py-0.2 text-[9px] font-mono text-slate-400 bg-slate-800 rounded border border-slate-700">
+                /
+              </kbd>
             </div>
 
             {/* Filter Pills */}
@@ -1116,9 +1218,13 @@ function ExecutiveWorkspaceContent() {
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                           : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
                       }`}
+                      title="Copiar resumen para WhatsApp (Alt + W)"
                     >
                       {whatsappCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-emerald-400" />}
                       <span>{whatsappCopied ? "¡Copiado!" : "Copiar para WhatsApp"}</span>
+                      <kbd className="hidden md:inline-block text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-400/40 text-emerald-200">
+                        Alt+W
+                      </kbd>
                     </button>
                     <button
                       onClick={openWhatsAppWeb}

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import initialDataJson from "@/data/initialData.json";
 import { AppData, Liquidacion, CRMItem, UrgentTask, LegajoItem, PaymentItem, ServiceItem } from "@/types";
 import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
+import { ShortcutsModal } from "@/components/ShortcutsModal";
 
 interface AppContextType {
   data: AppData;
@@ -36,6 +37,9 @@ interface AppContextType {
   // Active Workspace Navigation
   activeTab: "seguimiento" | "numeros" | "liquidaciones";
   setActiveTab: (tab: "seguimiento" | "numeros" | "liquidaciones") => void;
+  // Shortcuts Modal
+  isShortcutsOpen: boolean;
+  setIsShortcutsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   // Utils
   resetToDefaultData: () => void;
 }
@@ -48,6 +52,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [data, setData] = useState<AppData>(initialDataJson as unknown as AppData);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTabState] = useState<"seguimiento" | "numeros" | "liquidaciones">("seguimiento");
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [toast, setToast] = useState<{ id: string; message: string; type: "success" | "info" | "warning" } | null>(null);
 
   const setActiveTab = useCallback((tab: "seguimiento" | "numeros" | "liquidaciones") => {
@@ -77,30 +82,121 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Global hotkeys (1, 2, 3) to switch tabs instantly anywhere in the app
+  // Global hotkeys to navigate & execute actions anywhere in the app
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore AltGr combinations (AltGr sets both ctrlKey and altKey on Windows Spanish keyboards)
+      if (e.ctrlKey && e.altKey) return;
+
       const target = e.target as HTMLElement;
-      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) {
+      const isTyping = target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
+
+      // 1. ESCAPE: Close modals or blur active input
+      if (e.key === "Escape") {
+        setIsShortcutsOpen(false);
+        window.dispatchEvent(new CustomEvent("close-modals"));
+        if (isTyping) {
+          target.blur();
+        }
         return;
       }
+
+      // 2. ALT + [KEY] SHORTCUTS (allowed even if an input is focused)
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const code = e.code;
+        const key = e.key.toLowerCase();
+
+        // Alt + P: Programar Alerta / Vencimiento en Agenda
+        if (key === "p" || code === "KeyP") {
+          e.preventDefault();
+          setActiveTab("seguimiento");
+          if (window.location.pathname !== "/") {
+            window.location.href = "/?tab=seguimiento";
+          }
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("open-schedule-alert"));
+          }, 80);
+          return;
+        }
+
+        // Alt + L: Nueva Liquidación Rápida
+        if (key === "l" || code === "KeyL") {
+          e.preventDefault();
+          if (window.location.pathname !== "/") {
+            window.location.href = "/?tab=liquidaciones&nueva=true";
+          } else {
+            window.dispatchEvent(new CustomEvent("open-new-liquidacion"));
+          }
+          return;
+        }
+
+        // Alt + C: Nueva Cotización / Propuesta en CRM
+        if (key === "c" || code === "KeyC") {
+          e.preventDefault();
+          setActiveTab("seguimiento");
+          if (window.location.pathname !== "/") {
+            window.location.href = "/?tab=seguimiento";
+          }
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("focus-new-cotizacion"));
+          }, 80);
+          return;
+        }
+
+        // Alt + M: Nuevo Legajo de Comisión (Mis Números)
+        if (key === "m" || code === "KeyM") {
+          e.preventDefault();
+          setActiveTab("numeros");
+          if (window.location.pathname !== "/") {
+            window.location.href = "/?tab=numeros";
+          }
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("open-new-legajo"));
+          }, 80);
+          return;
+        }
+
+        // Alt + W: Copiar Resumen de Liquidación para WhatsApp
+        if (key === "w" || code === "KeyW") {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("trigger-copy-whatsapp"));
+          return;
+        }
+      }
+
+      // 3. SINGLE-KEY SHORTCUTS (only when NOT typing in an input/textarea)
+      if (isTyping) return;
+
+      // Workspaces 1, 2, 3
       if (e.key === "1") {
+        e.preventDefault();
         setActiveTab("seguimiento");
         if (window.location.pathname !== "/") {
           window.location.href = "/?tab=seguimiento";
         }
       } else if (e.key === "2") {
+        e.preventDefault();
         setActiveTab("numeros");
         if (window.location.pathname !== "/") {
           window.location.href = "/?tab=numeros";
         }
       } else if (e.key === "3") {
+        e.preventDefault();
         setActiveTab("liquidaciones");
         if (window.location.pathname !== "/") {
           window.location.href = "/?tab=liquidaciones";
         }
+      } else if (e.key === "/") {
+        // Quick Search focus
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("focus-search-input"));
+      } else if (e.key === "?" || (e.shiftKey && e.key === "?")) {
+        // Shortcuts Cheat Sheet toggle
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setActiveTab]);
@@ -445,10 +541,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast,
         activeTab,
         setActiveTab,
+        isShortcutsOpen,
+        setIsShortcutsOpen,
         resetToDefaultData,
       }}
     >
       {children}
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       {toast && (
         <div
           role="status"
