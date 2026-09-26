@@ -15,11 +15,18 @@ const data = JSON.parse(rawData);
 
 assert(Array.isArray(data.liquidaciones), "data.liquidaciones debe ser un array");
 assert(data.liquidaciones.length >= 66, `Se esperaban al menos 66 liquidaciones, encontradas: ${data.liquidaciones.length}`);
+const paidCount = data.liquidaciones.filter((l) => l.pending_balance <= 0.05).length;
+const pendingCount = data.liquidaciones.filter((l) => l.pending_balance > 0.05).length;
+assert.strictEqual(paidCount, 41, `Se esperaban exactamente 41 liquidaciones saldadas según el Excel de Lautaro, encontradas: ${paidCount}`);
+assert.strictEqual(pendingCount, 25, `Se esperaban exactamente 25 liquidaciones con saldo pendiente, encontradas: ${pendingCount}`);
+
 assert(Array.isArray(data.legajos), "data.legajos debe ser un array");
 assert(data.legajos.length >= 380, `Se esperaban al menos 380 legajos, encontrados: ${data.legajos.length}`);
 assert(data.crm && data.crm.urgencias_hoy, "data.crm.urgencias_hoy debe existir");
 assert(data.crm.propuestas_enviadas.length > 0, "Debe haber propuestas enviadas");
-console.log("✔ [TEST 1 PASÓ] Datos iniciales intactos: 66 liquidaciones, 386 legajos y CRM cargados.");
+assert(Array.isArray(data.crm.ventas_cerradas_2026) && data.crm.ventas_cerradas_2026.length >= 170, "ventas_cerradas_2026 debe contener al menos 170 ventas cerradas");
+assert(Array.isArray(data.crm.ventas_cerradas_2025) && data.crm.ventas_cerradas_2025.length >= 100, "ventas_cerradas_2025 debe contener al menos 100 ventas cerradas");
+console.log(`✔ [TEST 1 PASÓ] Datos iniciales intactos: 66 liquidaciones (${paidCount} saldadas, ${pendingCount} con saldo), 386 legajos, y ${data.crm.ventas_cerradas_2026.length} ventas cerradas 2026 separadas.`);
 
 // 2. Test de cálculo de servicios y balance inicial
 console.log("\n[TEST 2] Verificando cálculo de liquidación y balance inicial...");
@@ -143,6 +150,39 @@ crmItem.status = "cerrado";
 assert.strictEqual(crmItem.status, "cerrado");
 console.log("✔ [TEST 8 PASÓ] Transiciones de estado de cotizaciones funcionan sin inconsistencias.");
 
+// 9. Test de Cerrar Venta y traspaso a Ventas Cerradas 2026
+console.log("\n[TEST 9] Verificando acción 'Cerrar Venta' (desaparece de seguimiento y entra en Ventas Cerradas)...");
+const initialEnviadasCount = data.crm.propuestas_enviadas.length;
+const initialCerradas2026Count = data.crm.ventas_cerradas_2026.length;
+
+const testItemToClose = { id: "test-close-id", title: "Lopez Carlos - Vuelos Rio", status: "enviada" };
+data.crm.propuestas_enviadas.push(testItemToClose);
+assert.strictEqual(data.crm.propuestas_enviadas.length, initialEnviadasCount + 1);
+
+// Simular cerrarVentaCRM(id, date, title)
+function simulateCerrarVentaCRM(id, date, title) {
+  const item = data.crm.propuestas_enviadas.find(p => p.id === id) || data.crm.propuestas_a_armar.find(p => p.id === id);
+  data.crm.propuestas_enviadas = data.crm.propuestas_enviadas.filter(p => p.id !== id);
+  data.crm.propuestas_a_armar = data.crm.propuestas_a_armar.filter(p => p.id !== id);
+  data.crm.ventas_cerradas_2026.unshift({
+    id: id || `crm-c-${Date.now()}`,
+    title: title || (item ? item.title : "Venta cerrada"),
+    status: "cerrado",
+    date: date || new Date().toISOString().split("T")[0]
+  });
+}
+
+simulateCerrarVentaCRM("test-close-id", "2026-09-26", "Lopez Carlos - Vuelos Rio de Janeiro");
+
+assert(
+  !data.crm.propuestas_enviadas.some(p => p.id === "test-close-id"),
+  "La propuesta cerrada NO debe figurar más en propuestas_enviadas"
+);
+assert.strictEqual(data.crm.propuestas_enviadas.length, initialEnviadasCount);
+assert.strictEqual(data.crm.ventas_cerradas_2026.length, initialCerradas2026Count + 1);
+assert.strictEqual(data.crm.ventas_cerradas_2026[0].title, "Lopez Carlos - Vuelos Rio de Janeiro");
+console.log("✔ [TEST 9 PASÓ] 'Cerrar Venta' retira la propuesta de seguimiento y la archiva en Ventas Cerradas 2026.");
+
 console.log("\n=======================================================");
-console.log("🎉 ¡TODOS LOS TESTS DE LÓGICA DE NEGOCIO PASARON (8/8)!");
+console.log("🎉 ¡TODOS LOS TESTS DE LÓGICA DE NEGOCIO PASARON (9/9)!");
 console.log("=======================================================\n");

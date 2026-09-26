@@ -42,6 +42,7 @@ export interface CRMItem {
   date?: string;
   status: 'armar' | 'enviada' | 'cerrado' | 'viajando';
   notes?: string;
+  year?: string;
 }
 
 export interface UrgentTask {
@@ -72,8 +73,8 @@ export interface AppData {
     urgencias_hoy: UrgentTask[];
     propuestas_a_armar: CRMItem[];
     propuestas_enviadas: CRMItem[];
-    cerrados_2026: CRMItem[];
-    cerrados_2025: CRMItem[];
+    ventas_cerradas_2026: CRMItem[];
+    ventas_cerradas_2025: CRMItem[];
   };
   legajos: LegajoItem[];
 }

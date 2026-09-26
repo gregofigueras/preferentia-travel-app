@@ -69,7 +69,7 @@ export default function CRMPage() {
 
   const colArmar = filterItems(data.crm.propuestas_a_armar);
   const colEnviadas = filterItems(data.crm.propuestas_enviadas);
-  const colCerradas = filterItems(data.crm.cerrados_2026);
+  const colCerradas = filterItems(data.crm.ventas_cerradas_2026);
 
   return (
     <div className="space-y-6">

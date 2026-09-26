@@ -16,8 +16,11 @@ interface AppContextType {
   addServiceToLiquidacion: (liqId: string, service: ServiceItem) => void;
   deleteServiceFromLiquidacion: (liqId: string, serviceIndex: number) => void;
   // CRM
+  addCRMProposal: (title: string, column: "armar" | "enviada") => void;
   addCRMItem: (item: Omit<CRMItem, "id">) => void;
   updateCRMStatus: (id: string, newStatus: CRMItem["status"]) => void;
+  moveCRMToSeguimiento: (id: string) => void;
+  cerrarVentaCRM: (id: string, date: string, title: string) => void;
   deleteCRMItem: (id: string) => void;
   // Urgent Tasks
   toggleUrgentTask: (id: string) => void;
@@ -29,7 +32,7 @@ interface AppContextType {
   resetToDefaultData: () => void;
 }
 
-const LOCAL_STORAGE_KEY = "preferentia_travel_data_v1";
+const LOCAL_STORAGE_KEY = "preferentia_travel_data_v2";
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -42,7 +45,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
-        setData(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.liquidaciones && parsed.crm) {
+          setData(parsed);
+        }
       }
     } catch (e) {
       console.error("Error loading stored data", e);
@@ -51,7 +57,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Save to LocalStorage on change
   const persistData = (newData: AppData) => {
     setData(newData);
     try {
@@ -63,13 +68,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addLiquidacion = (item: Omit<Liquidacion, "id">) => {
     const id = `liq-${Date.now()}`;
+    const total_paid = item.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const pending_balance = Math.max(0, item.total_amount - total_paid);
+    const status: Liquidacion["status"] = pending_balance <= 0.05 ? "paid" : total_paid > 0 ? "partial" : "pending";
+
     const newLiq: Liquidacion = {
       ...item,
       id,
-      total_paid: item.payments.reduce((acc, p) => acc + (p.amount || 0), 0),
-      pending_balance: item.total_amount - item.payments.reduce((acc, p) => acc + (p.amount || 0), 0),
+      total_paid,
+      pending_balance,
+      status,
     };
-    newLiq.status = newLiq.pending_balance <= 0.05 ? "paid" : newLiq.total_paid > 0 ? "partial" : "pending";
 
     const updated = {
       ...data,
@@ -135,45 +144,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateLiquidacion(liqId, { services: newServices });
   };
 
+  // CRM: Propuestas y Cierre de Ventas
+  const addCRMProposal = (title: string, column: "armar" | "enviada") => {
+    const newItem: CRMItem = {
+      id: `crm-${Date.now()}`,
+      title,
+      status: column,
+      date: new Date().toISOString().split("T")[0],
+    };
+    if (column === "armar") {
+      persistData({
+        ...data,
+        crm: {
+          ...data.crm,
+          propuestas_a_armar: [newItem, ...data.crm.propuestas_a_armar],
+        },
+      });
+    } else {
+      persistData({
+        ...data,
+        crm: {
+          ...data.crm,
+          propuestas_enviadas: [newItem, ...data.crm.propuestas_enviadas],
+        },
+      });
+    }
+  };
+
   const addCRMItem = (item: Omit<CRMItem, "id">) => {
     const newItem: CRMItem = { ...item, id: `crm-${Date.now()}` };
-    const updated = {
+    persistData({
       ...data,
       crm: {
         ...data.crm,
         propuestas_enviadas: [newItem, ...data.crm.propuestas_enviadas],
       },
-    };
-    persistData(updated);
+    });
   };
 
   const updateCRMStatus = (id: string, newStatus: CRMItem["status"]) => {
-    // Find in all crm arrays and move appropriately
-    const findAndRemove = (list: CRMItem[]) => list.filter((item) => item.id !== id);
-    const allItems = [
-      ...data.crm.propuestas_a_armar,
-      ...data.crm.propuestas_enviadas,
-      ...data.crm.cerrados_2026,
-    ];
-    const target = allItems.find((i) => i.id === id);
-    if (!target) return;
+    if (newStatus === "cerrado") {
+      const item = data.crm.propuestas_enviadas.find(i => i.id === id) || data.crm.propuestas_a_armar.find(i => i.id === id);
+      if (item) {
+        cerrarVentaCRM(id, new Date().toISOString().split("T")[0], item.title);
+      }
+    } else if (newStatus === "enviada") {
+      moveCRMToSeguimiento(id);
+    }
+  };
 
-    target.status = newStatus;
-    const newArmar = findAndRemove(data.crm.propuestas_a_armar);
-    const newEnviadas = findAndRemove(data.crm.propuestas_enviadas);
-    const newCerradas = findAndRemove(data.crm.cerrados_2026);
-
-    if (newStatus === "armar") newArmar.unshift(target);
-    else if (newStatus === "enviada") newEnviadas.unshift(target);
-    else if (newStatus === "cerrado") newCerradas.unshift(target);
-
+  const moveCRMToSeguimiento = (id: string) => {
+    const item = data.crm.propuestas_a_armar.find((i) => i.id === id);
+    if (!item) return;
+    const newArmar = data.crm.propuestas_a_armar.filter((i) => i.id !== id);
+    const newEnviadas = [{ ...item, status: "enviada" as const }, ...data.crm.propuestas_enviadas];
     persistData({
       ...data,
       crm: {
         ...data.crm,
         propuestas_a_armar: newArmar,
         propuestas_enviadas: newEnviadas,
-        cerrados_2026: newCerradas,
+      },
+    });
+  };
+
+  // Al cerrar una venta, SE SACA de seguimiento y pasa a Ventas Cerradas
+  const cerrarVentaCRM = (id: string, date: string, title: string) => {
+    const newEnviadas = data.crm.propuestas_enviadas.filter((i) => i.id !== id);
+    const newArmar = data.crm.propuestas_a_armar.filter((i) => i.id !== id);
+    const newCerrada: CRMItem = {
+      id: `cerrada-${Date.now()}`,
+      date: date || new Date().toISOString().split("T")[0],
+      title: title.trim(),
+      status: "cerrado",
+      year: "2026",
+    };
+    persistData({
+      ...data,
+      crm: {
+        ...data.crm,
+        propuestas_enviadas: newEnviadas,
+        propuestas_a_armar: newArmar,
+        ventas_cerradas_2026: [newCerrada, ...data.crm.ventas_cerradas_2026],
       },
     });
   };
@@ -185,7 +237,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...data.crm,
         propuestas_a_armar: data.crm.propuestas_a_armar.filter((i) => i.id !== id),
         propuestas_enviadas: data.crm.propuestas_enviadas.filter((i) => i.id !== id),
-        cerrados_2026: data.crm.cerrados_2026.filter((i) => i.id !== id),
+        ventas_cerradas_2026: data.crm.ventas_cerradas_2026.filter((i) => i.id !== id),
       },
     });
   };
@@ -254,8 +306,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deletePaymentFromLiquidacion,
         addServiceToLiquidacion,
         deleteServiceFromLiquidacion,
+        addCRMProposal,
         addCRMItem,
         updateCRMStatus,
+        moveCRMToSeguimiento,
+        cerrarVentaCRM,
         deleteCRMItem,
         toggleUrgentTask,
         addUrgentTask,

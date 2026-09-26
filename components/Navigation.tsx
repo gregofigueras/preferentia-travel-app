@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  LayoutDashboard, 
   ReceiptText, 
   KanbanSquare, 
   FileSpreadsheet, 
@@ -24,28 +23,23 @@ export const Navigation: React.FC = () => {
 
   const navItems = [
     {
-      name: "Dashboard",
-      href: "/",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Liquidaciones",
-      href: "/liquidaciones",
-      icon: ReceiptText,
-      badge: pendingDebtCount > 0 ? `${pendingDebtCount} cobranzas` : undefined,
-      badgeColor: "bg-amber-100 text-amber-800 border-amber-200",
-    },
-    {
-      name: "Pipeline CRM",
-      href: "/crm",
+      name: "1. Seguimiento & Cotizaciones",
+      href: "/?tab=seguimiento",
       icon: KanbanSquare,
       badge: pendingUrgentCount > 0 ? `${pendingUrgentCount} urgentes` : undefined,
-      badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
+      badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/30",
     },
     {
-      name: "Legajos & Comisiones",
-      href: "/legajos",
+      name: "2. Mis Números & Legajos",
+      href: "/?tab=numeros",
       icon: FileSpreadsheet,
+    },
+    {
+      name: "3. Liquidaciones & Cobranzas",
+      href: "/?tab=liquidaciones",
+      icon: ReceiptText,
+      badge: pendingDebtCount > 0 ? `${pendingDebtCount} por cobrar` : undefined,
+      badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
     },
   ];
 

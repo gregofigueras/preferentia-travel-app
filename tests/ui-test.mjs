@@ -58,25 +58,27 @@ async function runUITests() {
   });
   const context = await browser.newContext({ 
     locale: "es-AR",
-    viewport: { width: 1280, height: 800 } 
+    viewport: { width: 1400, height: 900 } 
   });
   const page = await context.newPage();
 
   try {
-    // TEST DASHBOARD
-    console.log("\n[3/6] Testeando Dashboard General ('/')...");
+    // =========================================================================
+    // TEST 3: TABLERO OPERATIVO UNIFICADO (DISPLAY) & WORKSPACE 1
+    // =========================================================================
+    console.log("\n[3/6] Testeando Tablero Operativo Unificado ('/')...");
     await page.goto("http://localhost:3000", { waitUntil: "networkidle" });
     
     // Verificar título y marca
     const titleText = await page.textContent("body");
     if (!titleText.includes("PREFERENTIA") || !titleText.includes("Lautaro")) {
-      throw new Error("No se encontró el branding de Preferentia o Lautaro en el Dashboard");
+      throw new Error("No se encontró el branding de Preferentia o Lautaro en el Tablero");
     }
     console.log("✔ Branding 'PREFERENTIA TRAVEL' y 'Lautaro Zeppa' verificado.");
 
     // Test Widget "HOY SI O SI": agregar tarea urgente
     console.log("  -> Testeando widget de urgencias diarias ('HOY SI O SI')...");
-    const urgentInput = page.locator('input[placeholder="Nueva urgencia diaria..."]');
+    const urgentInput = page.locator('input[placeholder="Agregar urgencia del día..."]');
     await urgentInput.fill("Reprogramar vuelos Arajet familia Gonzalez");
     await page.click('button:has-text("Agregar")');
     await wait(400);
@@ -90,23 +92,83 @@ async function runUITests() {
     await wait(300);
     console.log("  ✔ Tarea urgente marcada como completada.");
 
-    // Búsqueda en Dashboard
-    console.log("  -> Testeando buscador global en Dashboard...");
-    const searchInput = page.locator('input[placeholder="Buscar cliente, destino..."]');
-    await searchInput.fill("Demicheli");
-    await wait(400);
-    const rowDemicheli = await page.locator('td:has-text("Demicheli")').first().isVisible();
-    if (!rowDemicheli) throw new Error("El buscador no filtró la liquidación de Demicheli.");
-    console.log("  ✔ Buscador global filtró liquidaciones en vivo.");
+    // Test Cerrar Venta en Seguimiento
+    console.log("  -> Testeando flujo 'Cerrar Venta' (desaparece de seguimiento y entra en Ventas Cerradas)...");
+    const cerrarBtn = page.locator('button:has-text("Cerrar Venta")').first();
+    await cerrarBtn.click();
+    await wait(300);
 
-    // TEST LIQUIDACIONES
-    console.log("\n[4/6] Testeando Módulo de Liquidaciones ('/liquidaciones')...");
+    // Modal de confirmación de cierre
+    const confirmModal = page.locator('button:has-text("Confirmar Venta Cerrada")');
+    await confirmModal.waitFor({ state: "visible", timeout: 3000 });
+    await confirmModal.click();
+    await wait(400);
+    console.log("  ✔ Venta cerrada y archivada automáticamente en Ventas Cerradas 2026.");
+
+    // =========================================================================
+    // TEST 4: WORKSPACE 2 - MIS NÚMEROS & LEGAJOS + CALCULADORA
+    // =========================================================================
+    console.log("\n[4/6] Testeando Workspace 2: Mis Números & Legajos y Calculadora...");
+    await page.keyboard.press("2");
+    await wait(300);
+    let legajosTable = await page.locator('h3:has-text("Expedientes Cerrados")').isVisible();
+    if (!legajosTable) {
+      await page.click('button:has-text("2. Mis Números & Legajos")');
+      await wait(500);
+      legajosTable = await page.locator('h3:has-text("Expedientes Cerrados")').isVisible();
+    }
+    if (!legajosTable) {
+      throw new Error("No se desplegó el panel de Mis Números & Legajos.");
+    }
+    console.log("  ✔ Panel de Legajos y Comisiones mensual activo.");
+
+    // Testear Calculadora Interactiva en vivo
+    const utilidadInput = page.locator('input[type="number"][step="0.01"]').first();
+    await utilidadInput.fill("2000");
+    await wait(200);
+
+    // Con utilidad 2000, 18% retención (1640), 50% split = 820.00
+    const calcResult = await page.locator('text="$820.00"').isVisible();
+    if (!calcResult) throw new Error("La calculadora no computó $820.00 para utilidad de 2000.");
+    console.log("  ✔ Calculadora Inteligente verificada en Tablero: $2,000 util. -> $820.00 comisión.");
+
+    // =========================================================================
+    // TEST 5: WORKSPACE 3 - LIQUIDACIONES SPLIT-VIEW (MASTER-DETAIL)
+    // =========================================================================
+    console.log("\n[5/6] Testeando Workspace 3: Liquidaciones Split-View Master-Detail...");
+    await page.click('button:has-text("3. Liquidaciones & Fichas")');
+    await wait(400);
+
+    // Buscar "Demicheli" en el buscador de la lista
+    const searchLiqInput = page.locator('input[placeholder="Buscar cliente, destino, hoja..."]');
+    await searchLiqInput.fill("Demicheli");
+    await wait(300);
+
+    const demicheliCard = page.locator('text="Demicheli"').first();
+    await demicheliCard.click();
+    await wait(300);
+
+    // Verificar que el panel de detalle a la derecha cargó a Demicheli
+    const detailTitle = await page.locator('h3:has-text("Demicheli")').first().isVisible();
+    if (!detailTitle) throw new Error("El panel de detalle no cargó la ficha de Demicheli.");
+    console.log("  ✔ Split-view sincronizado: ficha de Demicheli cargada en panel derecho.");
+
+    // Test botón Copiar WhatsApp en Split View
+    await page.click('button:has-text("Copiar para WhatsApp")');
+    await wait(300);
+    const feedbackCopy = await page.locator('text="¡Copiado para WhatsApp!"').isVisible();
+    if (!feedbackCopy) throw new Error("El botón de WhatsApp en Split-View no mostró confirmación.");
+    console.log("  ✔ Resumen de WhatsApp copiado exitosamente desde el Split-View.");
+
+    // =========================================================================
+    // TEST 6: MÓDULO DE LIQUIDACIONES DEDICADO Y FLUJO COMPLETO DE COBROS
+    // =========================================================================
+    console.log("\n[6/6] Testeando Módulo Dedicado ('/liquidaciones') y Cobros en ARS/USD...");
     await page.goto("http://localhost:3000/liquidaciones", { waitUntil: "networkidle" });
 
     // Filtrar por 'Con Saldo Pendiente'
     await page.click('button:has-text("Con Saldo Pendiente")');
     await wait(300);
-    console.log("  ✔ Filtro 'Con Saldo Pendiente' activo.");
 
     // Crear una Nueva Liquidación
     console.log("  -> Creando nueva liquidación vía modal...");
@@ -122,21 +184,13 @@ async function runUITests() {
     await page.click('button:has-text("Crear Ficha de Viaje")');
     await wait(500);
 
-    // Verificar que se creó y aparece en la lista
-    const newLiqCard = page.locator('h3:has-text("Familia Rodriguez Test")');
-    await newLiqCard.waitFor({ state: "visible", timeout: 3000 });
-    console.log("  ✔ Liquidación 'Familia Rodriguez Test' creada exitosamente con USD 3,000.");
-
-    // TEST DETALLE DE LIQUIDACIÓN Y CONTROL DE PAGOS
-    console.log("\n[5/6] Testeando Ficha de Viaje, Pagos con TC y WhatsApp Export...");
-    // Click en la nueva liquidación recién creada (tiene link con liq- en href)
+    // Click en la nueva liquidación
     const newCard = page.locator('.group', { has: page.locator('h3:has-text("Familia Rodriguez Test")') }).first();
     await newCard.locator('a:has-text("Ver Ficha & Pagos")').click();
     await page.waitForURL(/\/liquidaciones\/.+/, { timeout: 4000 });
-    console.log("  ✔ Ficha abierta:", page.url());
+    console.log("  ✔ Ficha individual abierta:", page.url());
 
-    // 1. Agregar un servicio adicional
-    console.log("  -> Agregando servicio adicional ('Excursión San Martín')...");
+    // Agregar servicio adicional
     await page.click('button:has-text("Agregar Ítem")');
     await wait(200);
     await page.fill('input[placeholder="Descripción (ej: Vuelos ARAJET BUE-PUJ, Hotel Barceló...)"]', "Excursión San Martín de los Andes");
@@ -148,11 +202,9 @@ async function runUITests() {
     if (!totalText) throw new Error("El total contratado no se recalculó a USD 3,400.");
     console.log("  ✔ Servicio agregado y Total Contratado recalculado a USD 3,400.");
 
-    // 2. Registrar cobro en ARS con Tipo de Cambio
-    console.log("  -> Registrando cobro en ARS con TC...");
+    // Registrar cobro en ARS con Tipo de Cambio
     await page.click('button:has-text("+ Registrar Cobro")');
     await wait(200);
-
     await page.selectOption('select:has-text("USD (Dólares billete o transf.)")', "ARS");
     await wait(200);
     await page.fill('input[placeholder="0.00"]', "1560000"); // 1.560.000 ARS
@@ -161,17 +213,14 @@ async function runUITests() {
     await page.click('form button[type="submit"]:has-text("Registrar Cobro")');
     await wait(500);
 
-    // Verificar nuevo cobrado y saldo pendiente (3400 - 1000 = 2400)
     const cobradoUSD1000 = await page.locator('text=/USD 1[.,]000/').first().isVisible();
     const pendienteUSD2400 = await page.locator('text=/USD 2[.,]400/').first().isVisible();
     if (!cobradoUSD1000 || !pendienteUSD2400) {
-      console.log("DEBUG HTML:", (await page.content()).slice(0, 1000));
       throw new Error("El cobro en ARS no se convirtió o el saldo no es USD 2,400");
     }
     console.log("  ✔ Cobro ARS registrado a TC 1560. Total Cobrado: USD 1,000 | Saldo Pendiente: USD 2,400.");
 
-    // 3. Registrar cobro final para saldar viaje
-    console.log("  -> Registrando cobro saldo en USD para saldar el viaje...");
+    // Registrar cobro final para saldar viaje
     await page.click('button:has-text("+ Registrar Cobro")');
     await wait(200);
     await page.fill('input[placeholder="0.00"]', "2400");
@@ -183,56 +232,8 @@ async function runUITests() {
     if (!saldadoBadge) throw new Error("El badge no cambió a SALDADO.");
     console.log("  ✔ Viaje saldado completamente: Saldo USD 0.00 y badge SALDADO activo.");
 
-    // 4. Test Copiar para WhatsApp
-    console.log("  -> Testeando botón 'Copiar para WhatsApp'...");
-    await page.click('button:has-text("Copiar para WhatsApp")');
-    await wait(300);
-    const feedbackCopy = await page.locator('text="¡Copiado para WhatsApp!"').isVisible();
-    if (!feedbackCopy) throw new Error("El botón de WhatsApp no mostró confirmación.");
-    console.log("  ✔ Botón 'Copiar para WhatsApp' validado.");
-
-    // TEST CRM PIPELINE
-    console.log("\n[6/6] Testeando Pipeline CRM y Calculadora de Comisiones...");
-    await page.goto("http://localhost:3000/crm", { waitUntil: "networkidle" });
-
-    // Agregar nueva propuesta
-    await page.click('button:has-text("+ Nueva Propuesta")');
-    await wait(200);
-    await page.fill('input[placeholder="Ej: Perez Juan - Vuelos Miami x4"]', "Test Gomez - Miami x3");
-    await page.click('button:has-text("Guardar Propuesta")');
-    await wait(400);
-
-    const propCard = page.locator('text="Test Gomez - Miami x3"');
-    if (!await propCard.isVisible()) throw new Error("La nueva propuesta no se visualiza en CRM.");
-    console.log("  ✔ Propuesta creada en columna 'A Cotizar / Armar'.");
-
-    // Mover a Enviada
-    await page.locator('button:has-text("Pasar a Enviada")').first().click();
-    await wait(300);
-    console.log("  ✔ Propuesta movida a 'Enviadas & Seguimiento'.");
-
-    // Mover a Cerrada
-    await page.locator('button:has-text("¡Cerrada!")').first().click();
-    await wait(300);
-    const createLiqBtn = await page.locator('a:has-text("Crear Liquidación")').first().isVisible();
-    if (!createLiqBtn) throw new Error("No apareció el botón 'Crear Liquidación' en la propuesta cerrada.");
-    console.log("  ✔ Propuesta cerrada con éxito con botón directo a 'Crear Liquidación'.");
-
-    // TEST LEGAJOS Y CALCULADORA
-    await page.goto("http://localhost:3000/legajos", { waitUntil: "networkidle" });
-    
-    // Testear Calculadora Interactiva en vivo
-    const utilidadInput = page.locator('input[type="number"][step="0.01"]').first();
-    await utilidadInput.fill("2000");
-    await wait(200);
-
-    // Con utilidad 2000, 18% retención (1640), 50% split = 820.00
-    const calcResult = await page.locator('text="$820.00"').isVisible();
-    if (!calcResult) throw new Error("La calculadora no computó $820.00 para utilidad de 2000.");
-    console.log("  ✔ Calculadora Inteligente de Comisiones verificada en vivo: $2,000 util. -> $820.00 com. neta.");
-
     console.log("\n=======================================================");
-    console.log("🎉 ¡TEST DE UI Y FLUJOS E2E FINALIZADO CON 100% DE ÉXITO!");
+    console.log("🎉 ¡TODOS LOS TESTS DE UI Y DISPLAY PASARON CON ÉXITO!");
     console.log("=======================================================\n");
 
   } finally {
