@@ -140,7 +140,7 @@ async function runUITests() {
     await wait(400);
 
     // Buscar "Demicheli" en el buscador de la lista
-    const searchLiqInput = page.locator('input[placeholder="Buscar cliente, destino, hoja..."]');
+    const searchLiqInput = page.locator('input[placeholder="Buscar cliente, destino..."]');
     await searchLiqInput.fill("Demicheli");
     await wait(300);
 
@@ -149,14 +149,14 @@ async function runUITests() {
     await wait(300);
 
     // Verificar que el panel de detalle a la derecha cargó a Demicheli
-    const detailTitle = await page.locator('h3:has-text("Demicheli")').first().isVisible();
+    const detailTitle = await page.locator('h2:has-text("Demicheli")').first().isVisible();
     if (!detailTitle) throw new Error("El panel de detalle no cargó la ficha de Demicheli.");
     console.log("  ✔ Split-view sincronizado: ficha de Demicheli cargada en panel derecho.");
 
     // Test botón Copiar WhatsApp en Split View
     await page.click('button:has-text("Copiar para WhatsApp")');
     await wait(300);
-    const feedbackCopy = await page.locator('text="¡Copiado para WhatsApp!"').isVisible();
+    const feedbackCopy = await page.locator('button:has-text("¡Copiado!")').isVisible();
     if (!feedbackCopy) throw new Error("El botón de WhatsApp en Split-View no mostró confirmación.");
     console.log("  ✔ Resumen de WhatsApp copiado exitosamente desde el Split-View.");
 
